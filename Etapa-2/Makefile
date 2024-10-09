@@ -14,7 +14,7 @@ parser.tab.o: parser.tab.c parser.tab.h
 	$(CC) -c parser.tab.c
 
 parser.tab.c parser.tab.h: parser.y
-	bison -d parser.y
+	bison -d parser.y --report-file=$(REPORT_FILE) 
 
 lex.yy.o: lex.yy.c parser.tab.h
 	$(CC) -c lex.yy.c
@@ -26,7 +26,7 @@ main.o: main.c
 	$(CC) -c main.c
 
 clean:
-	rm -f $(OBJ) lex.yy.c parser.tab.c parser.tab.h etapa2
+	rm -f $(OBJ) $(REPORT_FILE) lex.yy.c parser.tab.c parser.tab.h etapa2
 
 run: etapa2
 	./etapa2

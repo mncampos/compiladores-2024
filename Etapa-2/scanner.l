@@ -9,17 +9,15 @@
 %option noyywrap
 
 
-SPACE [ \t\r\f]
+SPACE [ \t\r\f\n]
 SPECIAL_CHARACTERS [-!*\/%+<>{}()=,;]
 
 %%
 
 
-    /* REGRA DE ESPAÇOS E COMENTARIOS  :  Ignora  espaços e o que  vier  após um  // */
 (\/\/).* {}
 {SPACE} {}
 
-    /*REGRA DE CARACTERES ESPECIAIS, RESERVED  WORDS  E OPERADORES  COMPOSTOS */
 
 "int" {return TK_PR_INT; }
 "float" { return TK_PR_FLOAT; }
@@ -45,8 +43,6 @@ SPECIAL_CHARACTERS [-!*\/%+<>{}()=,;]
 ([a-z]|_)([a-z]|[0-9]|_)* { return TK_IDENTIFICADOR; }
 
 {SPECIAL_CHARACTERS} { return yytext[0]; }
-
-\n {}
 
 . { return TK_ERRO; }
 
