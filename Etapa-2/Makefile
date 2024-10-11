@@ -2,33 +2,26 @@
 # GUILHERME DE SOUSA CIRUMBOLO - 00330049
 # Makefile para etapa 2 do trabalho de compiladores
 
-CC = gcc
+CC=gcc
+LIBS=-lfl 
+OBJ = parser.tab.o lex.yy.c main.o
 SCANNER = scanner.l
-OBJ = parser.tab.o lex.yy.o main.o
-REPORT_FILE = parser.output
+PARSER = parser.y
 
-etapa2: $(OBJ)
-	$(CC) -o etapa2 $(OBJ)
-
-parser.tab.o: parser.tab.c parser.tab.h
-	$(CC) -c parser.tab.c
-
-parser.tab.c parser.tab.h: parser.y
-	bison -d parser.y --report-file=$(REPORT_FILE) 
-
-lex.yy.o: lex.yy.c parser.tab.h
-	$(CC) -c lex.yy.c
+all: build
 
 lex.yy.c: $(SCANNER)
-	flex $(SCANNER)
+					flex $(SCANNER)
 
-main.o: main.c
-	$(CC) -c main.c
+parser.tab.o: $(PARSER)
+							bison -d $(PARSER) -Wcounterexamples
+
+main.o: 
+				gcc -c lex.yy.c parser.tab.c main.c
+
+build: $(OBJ)
+			 $(CC) -o etapa2 $^ $(LIBS)
+
 
 clean:
-	rm -f $(OBJ) $(REPORT_FILE) lex.yy.c parser.tab.c parser.tab.h etapa2
-
-run: etapa2
-	./etapa2
-
-
+			rm -f $(OBJ) lex.yy.c parser.tab.c parser.tab.h parser.output etapa2 lex.yy.o 
