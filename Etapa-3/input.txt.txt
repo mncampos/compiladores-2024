@@ -1,0 +1,4 @@
+main => int {
+int ab;
+ab = 4;
+}

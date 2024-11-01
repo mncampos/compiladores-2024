@@ -5,6 +5,7 @@
 #include "parser.tab.h"
 #include "type_lex.h"
 #include  <string.h>
+int get_line_number(void);
 %}
 
 %option yylineno
