@@ -1,10 +1,13 @@
 %{
+// MATEUS NUNES CAMPOS - 00268613
+// GUILHERME DE SOUSA CIRUMBOLO - 00330049
 #include <stdio.h>
 #include <stdlib.h>
 
 int yylex(void);
 void yyerror (char const *mensagem);
 extern int yylineno;
+extern char **ytext;
 %}
 
 
@@ -31,91 +34,79 @@ extern int yylineno;
 %%
 
 // Definição da gramática
-programa:
-    lista_funcoes | /* vazio */;
 
-lista_funcoes:
-    funcao | lista_funcoes funcao;
+// Programa  principal
 
-funcao:
-    TK_IDENTIFICADOR '=' lista_parametros '>' tipo bloco_comandos;
+programa: lista_funcoes | /* vazio */;
 
-lista_parametros:
-    /* vazio */ | lista_parametros TK_OC_OR parametro;
+// Funções
 
-parametro:
-    TK_IDENTIFICADOR '<' '-' tipo;
+lista_funcoes:  funcao | lista_funcoes funcao;
+funcao: cabecalho corpo;
+cabecalho: TK_IDENTIFICADOR parametros tipo;
+parametros : '='lista_parametros'>';
+lista_parametros: TK_IDENTIFICADOR '<' '-' tipo TK_OC_OR lista_parametros | TK_IDENTIFICADOR '<' '-' tipo | /* vazio */
+corpo: bloco_comandos;
 
-tipo:
-    TK_PR_INT | TK_PR_FLOAT;
+//Tipos e Literais
+literal: TK_LIT_INT | TK_LIT_FLOAT;
+tipo: TK_PR_INT | TK_PR_FLOAT;
 
-bloco_comandos:
-    '{' lista_comandos '}';
+// Bloco de Comandos
 
-lista_comandos:
-    /* vazio */ | lista_comandos comando;
+bloco_comandos: '{' lista_de_comandos '}' | '{' '}';
 
-comando:
-    declaracao_variavel ';'
-    | atribuicao ';'
-    | chamada_funcao ';'
-    | retorno ';'
-    | bloco_comandos
-    | controle_fluxo;
+comando:    declaracao_variavel 
+            | bloco_comandos 
+            | chamada_funcao 
+            | retorno 
+            | controle_fluxo
+            | atribuicao;
 
-declaracao_variavel:
-    tipo lista_variaveis;
+lista_de_comandos: comando ';' lista_de_comandos | comando ';';
 
-lista_variaveis:
-    TK_IDENTIFICADOR
-    | lista_variaveis ',' TK_IDENTIFICADOR
-    | lista_variaveis ',' TK_IDENTIFICADOR TK_OC_LE literal;
+// Variáveis
 
-literal:
-    TK_LIT_INT | TK_LIT_FLOAT;
+declaracao_variavel:  tipo lista_variaveis;
+lista_variaveis:  TK_IDENTIFICADOR ',' lista_variaveis 
+                | TK_IDENTIFICADOR TK_OC_LE literal ',' lista_variaveis 
+                | TK_IDENTIFICADOR TK_OC_LE literal | TK_IDENTIFICADOR;
 
-atribuicao:
-    TK_IDENTIFICADOR '=' expressao;
+//Atribuicao
 
-chamada_funcao:
-    TK_IDENTIFICADOR '(' lista_argumentos ')';
+atribuicao: TK_IDENTIFICADOR '=' expr;
 
-lista_argumentos:
-    /* vazio */ | lista_argumentos ',' expressao | expressao;
+//Chamada de função
 
-retorno:
-    TK_PR_RETURN expressao;
+chamada_funcao: TK_IDENTIFICADOR '(' lista_args ')';
+lista_args: expr ',' lista_args | expr;
 
-controle_fluxo:
-    TK_PR_IF '(' expressao ')' bloco_comandos TK_PR_ELSE bloco_comandos
-    | TK_PR_IF '(' expressao ')' bloco_comandos
-    | TK_PR_WHILE '(' expressao ')' bloco_comandos;
+// Comando de Retorno
 
-expressao:
-    expressao_binaria
-    | expressao_unaria
-    | TK_IDENTIFICADOR
-    | literal
-    | chamada_funcao
-    | '(' expressao ')';
+retorno: TK_PR_RETURN expr;
 
-expressao_binaria:
-    expressao '+' expressao
-    | expressao '-' expressao
-    | expressao '*' expressao
-    | expressao '/' expressao
-    | expressao '%' expressao
-    | expressao '<' expressao
-    | expressao '>' expressao
-    | expressao TK_OC_LE expressao
-    | expressao TK_OC_GE expressao
-    | expressao TK_OC_EQ expressao
-    | expressao TK_OC_NE expressao
-    | expressao TK_OC_AND expressao
-    | expressao TK_OC_OR expressao;
+//Controle de fluxo
 
-expressao_unaria:
-    '-' expressao | '!' expressao;
+controle_fluxo: if | while;
+if: TK_PR_IF '(' expr ')' corpo | TK_PR_IF '(' expr ')' corpo TK_PR_ELSE corpo ;
+while: TK_PR_WHILE  '(' expr ')' corpo ; 
+
+//Expressões
+expr: expr_or;
+expr_or: expr_or TK_OC_OR expr_and | expr_and;
+expr_and: expr_and TK_OC_AND expr_eq | expr_eq;
+op_eq: TK_OC_EQ | TK_OC_NE;
+expr_eq: expr_eq op_eq expr_cmp | expr_cmp;
+op_cmp: '<' | '>' | TK_OC_LE | TK_OC_GE;
+expr_cmp: expr_cmp op_cmp expr_sum | expr_sum;
+op_sum: '+' | '-';
+expr_sum: expr_sum op_sum expr_mult | expr_mult;
+op_mult: '*' | '/' | '%' ;
+expr_mult: expr_mult op_mult expr_unaria | expr_unaria;
+op_unario: '!' | '-'; 
+expr_unaria: op_unario expr_unaria | parenteses;
+parenteses: '(' expr ')' | op;
+op: TK_IDENTIFICADOR | literal | chamada_funcao;
 
 %%
 

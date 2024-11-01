@@ -3,32 +3,40 @@
 # Makefile para etapa 2 do trabalho de compiladores
 
 CC = gcc
+CFLAGS = -g -Wall
+LIBS = -lfl
+
+# Fontes
 SCANNER = scanner.l
+PARSER = parser.y
+SOURCES = main.c lex.yy.c parser.tab.c
 OBJ = parser.tab.o lex.yy.o main.o
-REPORT_FILE = parser.output
 
-etapa2: $(OBJ)
-	$(CC) -o etapa2 $(OBJ)
+# Alvo principal
+all: etapa2
 
-parser.tab.o: parser.tab.c parser.tab.h
-	$(CC) -c parser.tab.c
-
-parser.tab.c parser.tab.h: parser.y
-	bison -d parser.y --report-file=$(REPORT_FILE) 
-
-lex.yy.o: lex.yy.c parser.tab.h
-	$(CC) -c lex.yy.c
-
+# Regra para gerar lex.yy.c
 lex.yy.c: $(SCANNER)
 	flex $(SCANNER)
 
+# Regra para gerar parser.tab.c e parser.tab.h
+parser.tab.c parser.tab.h: $(PARSER)
+	bison -d $(PARSER) -Wcounterexamples
+
+# Regras para compilar cada arquivo objeto
 main.o: main.c
-	$(CC) -c main.c
+	$(CC) $(CFLAGS) -c main.c
 
+lex.yy.o: lex.yy.c
+	$(CC) $(CFLAGS) -c lex.yy.c
+
+parser.tab.o: parser.tab.c
+	$(CC) $(CFLAGS) -c parser.tab.c
+
+# Regra para construir o executável
+etapa2: $(OBJ)
+	$(CC) -o $@ $^ $(LIBS)
+
+# Regra de limpeza
 clean:
-	rm -f $(OBJ) $(REPORT_FILE) lex.yy.c parser.tab.c parser.tab.h etapa2
-
-run: etapa2
-	./etapa2
-
-
+	rm -f $(OBJ) lex.yy.c parser.tab.c parser.tab.h parser.output etapa2
