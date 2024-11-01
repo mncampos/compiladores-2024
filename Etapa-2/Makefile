@@ -2,26 +2,41 @@
 # GUILHERME DE SOUSA CIRUMBOLO - 00330049
 # Makefile para etapa 2 do trabalho de compiladores
 
-CC=gcc
-LIBS=-lfl 
-OBJ = parser.tab.o lex.yy.c main.o
+CC = gcc
+CFLAGS = -g -Wall
+LIBS = -lfl
+
+# Fontes
 SCANNER = scanner.l
 PARSER = parser.y
+SOURCES = main.c lex.yy.c parser.tab.c
+OBJ = parser.tab.o lex.yy.o main.o
 
-all: build
+# Alvo principal
+all: etapa2
 
+# Regra para gerar lex.yy.c
 lex.yy.c: $(SCANNER)
-					flex $(SCANNER)
+	flex $(SCANNER)
 
-parser.tab.o: $(PARSER)
-							bison -d $(PARSER) -Wcounterexamples
+# Regra para gerar parser.tab.c e parser.tab.h
+parser.tab.c parser.tab.h: $(PARSER)
+	bison -d $(PARSER) -Wcounterexamples
 
-main.o: 
-				gcc -c lex.yy.c parser.tab.c main.c
+# Regras para compilar cada arquivo objeto
+main.o: main.c
+	$(CC) $(CFLAGS) -c main.c
 
-build: $(OBJ)
-			 $(CC) -o etapa2 $^ $(LIBS)
+lex.yy.o: lex.yy.c
+	$(CC) $(CFLAGS) -c lex.yy.c
 
+parser.tab.o: parser.tab.c
+	$(CC) $(CFLAGS) -c parser.tab.c
 
+# Regra para construir o executável
+etapa2: $(OBJ)
+	$(CC) -o $@ $^ $(LIBS)
+
+# Regra de limpeza
 clean:
-			rm -f $(OBJ) lex.yy.c parser.tab.c parser.tab.h parser.output etapa2 lex.yy.o 
+	rm -f $(OBJ) lex.yy.c parser.tab.c parser.tab.h parser.output etapa2
