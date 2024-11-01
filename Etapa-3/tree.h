@@ -11,7 +11,7 @@ typedef struct node {
 } Node;
 
 
-//Cria um novo nó na árvore com valor léxico
+//Cria um novo nó na árvore com valor léxico informado
 Node* new_node(TypeLex* lex_value);
 
 //Cria um novo nó na árvore com apenas label, sem valor léxico

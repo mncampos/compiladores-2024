@@ -85,8 +85,8 @@ extern void *arvore;
 /* Um programa na linguagem é composto por uma
  lista de funções, sendo esta lista opcional. */
 
-programa: lista_funcoes { $$ = $1; arvore = $$;  printf("arvore valida");   }
-        | /* vazio */  { $$ = NULL }
+programa: lista_funcoes { $$ = $1; arvore = $$; }
+        | /* vazio */   { $$ = NULL; }
 
 // Funções
 
@@ -186,53 +186,43 @@ while: TK_PR_WHILE  '(' expr ')' corpo ;
 /*  Expressões tem operandos e operadores, sendo este opcional. Os operandos podem ser (a) identificadores, (b) literais e (c) chamada de função ou (d) outras expressões, podendo portanto ser for
 madas recursivamente pelo emprego de operadores. Elas também permitem o uso de parênteses para forçar uma associatividade ou precedência diferente daquela tradicional. A associatividade
  é à esquerda (portanto implemente recursão à esquerda nas regras gramaticais). */
-expr: expr_or  
+expr: expr_or { $$ = $1; }
 
-expr_or: expr_or TK_OC_OR expr_and 
-       | expr_and;
+expr_or: expr_or TK_OC_OR expr_and   { $$ = new_simple_node($2); add_child($$, $1); add_child($$, $3); }
+       | expr_and                    { $$ = $1; }
 
-expr_and: expr_and TK_OC_AND expr_eq 
-       | expr_eq;
+expr_and: expr_and TK_OC_AND expr_eq { $$ = new_simple_node($2); add_child($$, $1); add_child($$, $3); }
+       | expr_eq                     { $$ = $1; }
 
-op_eq: TK_OC_EQ 
-       | TK_OC_NE;
+expr_eq: expr_eq TK_OC_EQ expr_cmp   { $$ = new_simple_node($2); add_child($$, $1); add_child($$, $3); }
+       | expr_eq TK_OC_NE expr_cmp   { $$ = new_simple_node($2); add_child($$, $1); add_child($$, $3); }
+       | expr_cmp                    { $$ = $1; }
 
-expr_eq: expr_eq op_eq expr_cmp 
-       | expr_cmp;
+expr_cmp: expr_cmp '<' expr_sum      { $$ = new_simple_node($2); add_child($$, $1); add_child($$, $3); }
+        | expr_cmp '>' expr_sum      { $$ = new_simple_node($2); add_child($$, $1); add_child($$, $3); }
+        | expr_cmp TK_OC_LE expr_sum { $$ = new_simple_node($2); add_child($$, $1); add_child($$, $3); }
+        | expr_cmp TK_OC_GE expr_sum { $$ = new_simple_node($2); add_child($$, $1); add_child($$, $3); }
+        | expr_sum                   { $$ = $1; }
 
-op_cmp: '<' 
-       | '>' 
-       | TK_OC_LE 
-       | TK_OC_GE;
+expr_sum: expr_sum '+' expr_mult     { $$ = new_simple_node($2); add_child($$, $1); add_child($$, $3); } 
+        | expr_sum '-' expr_mult     { $$ = new_simple_node($2); add_child($$, $1); add_child($$, $3); }
+        | expr_mult                  {$$ = $1; }
 
-expr_cmp: expr_cmp op_cmp expr_sum 
-       | expr_sum;
+expr_mult: expr_mult '*' expr_unaria { $$ = new_simple_node($2); add_child($$, $1); add_child($$, $3); }
+         | expr_mult '/' expr_unaria { $$ = new_simple_node($2); add_child($$, $1); add_child($$, $3); }
+         | expr_mult '%' expr_unaria { $$ = new_simple_node($2); add_child($$, $1); add_child($$, $3); }
+         | expr_unaria               {$$ = $1; }
 
-op_sum: '+' 
-       | '-';
+expr_unaria: '!' expr_unaria         { $$ = new_simple_node($1); add_child($$, $2); }
+           | '-' expr_unaria         { $$ = new_simple_node($1); add_child($$, $2); }
+           | parenteses              {$$ = $1; }
 
-expr_sum: expr_sum op_sum expr_mult 
-       | expr_mult;
+parenteses: '(' expr ')'             { $$ = $2; }
+          | op                       {$$ = $1; }
 
-op_mult: '*' 
-       | '/' 
-       | '%' ;
-
-expr_mult: expr_mult op_mult expr_unaria 
-       | expr_unaria;
-
-op_unario: '!' 
-       | '-'; 
-
-expr_unaria: op_unario expr_unaria 
-       | parenteses;
-
-parenteses: '(' expr ')' 
-       | op;
-
-op: TK_IDENTIFICADOR 
-       | literal 
-       | chamada_funcao;
+op: TK_IDENTIFICADOR                 { $$ = new_node($1); }
+  | literal                          { $$ = $1;}
+  | chamada_funcao                   { $$ = $1;}
 
 %%
 
