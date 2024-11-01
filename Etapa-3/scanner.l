@@ -1,8 +1,10 @@
-/* Mateus Nunes Campos - 00268613  */
+/* MATEUS NUNES CAMPOS - 00268613  GUILHERME DE SOUSA CIRUMBOLO - 00330049 */
 
 %{
 #include <stdio.h>
 #include "parser.tab.h"
+#include "type_lex.h"
+#include  <string.h>
 %}
 
 %option yylineno
@@ -35,12 +37,12 @@ SPECIAL_CHARACTERS [-!*\/%+<>{}()=,;]
 
 
     /*REGRA DOS LITERAIS */
-[0-9]+ { return TK_LIT_INT; }
-[0-9]*\.[0-9]+ { return TK_LIT_FLOAT; }
+[0-9]+ {yylval.valor_lexico = new_lex_type(get_line_number(), LEX_LIT_INT, strdup(yytext)); return TK_LIT_INT; }
+[0-9]*\.[0-9]+ {yylval.valor_lexico = new_lex_type(get_line_number(), LEX_LIT_FLOAT, strdup(yytext)); return TK_LIT_FLOAT; }
 
 
     /* REGRA DOS IDENTIFICADORES */
-([a-z]|_)([a-z]|[0-9]|_)* { return TK_IDENTIFICADOR; }
+([a-z]|_)([a-z]|[0-9]|_)* { yylval.valor_lexico = new_lex_type(get_line_number(), LEX_IDENTIFIER, strdup(yytext)); return TK_IDENTIFICADOR; }
 
 {SPECIAL_CHARACTERS} { return yytext[0]; }
 

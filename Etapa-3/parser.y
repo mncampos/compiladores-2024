@@ -3,16 +3,16 @@
 // GUILHERME DE SOUSA CIRUMBOLO - 00330049
 #include <stdio.h>
 #include <stdlib.h>
+#include "tree.h"
 
 int yylex(void);
 void yyerror (char const *mensagem);
 extern int yylineno;
 extern char **ytext;
+extern void *arvore;
 %}
 
-
-
-%define parse.error verbose   
+%define parse.error verbose
 
 %token TK_PR_INT
 %token TK_PR_FLOAT
@@ -26,10 +26,55 @@ extern char **ytext;
 %token TK_OC_NE
 %token TK_OC_AND
 %token TK_OC_OR
-%token TK_IDENTIFICADOR
-%token TK_LIT_INT
-%token TK_LIT_FLOAT
 %token TK_ERRO
+
+%token<valor_lexico> TK_IDENTIFICADOR
+%token<valor_lexico> TK_LIT_INT
+%token<valor_lexico> TK_LIT_FLOAT
+
+%type<valor_lexico> literal
+%type<tree> programa
+%type<tree> lista_funcoes
+%type<tree> funcao
+%type<tree> cabecalho
+%type<tree> parametros
+%type<tree> lista_parametros
+%type<tree> corpo
+%type<tree> tipo
+%type<tree> bloco_comandos
+%type<tree> comando
+%type<tree> lista_de_comandos
+%type<tree> declaracao_variavel
+%type<tree> lista_variaveis
+%type<tree> atribuicao
+%type<tree> chamada_funcao
+%type<tree> lista_args
+%type<tree> retorno
+%type<tree> controle_fluxo
+%type<tree> if
+%type<tree> while
+%type<tree> expr
+%type<tree> expr_and
+%type<tree> expr_or
+%type<tree> op_eq
+%type<tree> expr_eq
+%type<tree> op_cmp
+%type<tree> expr_cmp
+%type<tree> op_sum
+%type<tree> expr_sum
+%type<tree> op_mult
+%type<tree> expr_mult
+%type<tree> op_unario
+%type<tree> expr_unaria
+%type<tree> parenteses
+%type<tree> op
+
+
+
+%union {
+    struct TypeLex* valor_lexico;
+    struct  Node* tree;
+}
 
 %%
 
