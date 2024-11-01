@@ -74,49 +74,39 @@ lista_variaveis:  TK_IDENTIFICADOR ',' lista_variaveis
 
 //Atribuicao
 
-atribuicao: TK_IDENTIFICADOR '=' expressao;
+atribuicao: TK_IDENTIFICADOR '=' expr;
 
 //Chamada de função
 
 chamada_funcao: TK_IDENTIFICADOR '(' lista_args ')';
-lista_args: expressao ',' lista_args | expressao;
+lista_args: expr ',' lista_args | expr;
 
 // Comando de Retorno
 
-retorno: TK_PR_RETURN expressao;
+retorno: TK_PR_RETURN expr;
 
 //Controle de fluxo
 
 controle_fluxo: if | while;
-if: TK_PR_IF '(' expressao ')' corpo | TK_PR_IF '(' expressao ')' corpo TK_PR_ELSE corpo ;
-while: TK_PR_WHILE  '(' expressao ')' corpo ; 
+if: TK_PR_IF '(' expr ')' corpo | TK_PR_IF '(' expr ')' corpo TK_PR_ELSE corpo ;
+while: TK_PR_WHILE  '(' expr ')' corpo ; 
 
-//Expressões -> Precedência maior fica mais embaixo
-expressao: expressao TK_OC_OR produto
-         |  expressao TK_OC_AND produto
-         |  expressao TK_OC_NE produto
-         |  expressao TK_OC_EQ produto
-         |  expressao TK_OC_GE produto
-         |  expressao TK_OC_LE produto
-         |  expressao '>' produto
-         |  expressao '<' produto
-         |  expressao '-' produto
-         |  expressao '+' produto
-         |  produto
-         ;
-
-produto: produto '%' primario
-       |  produto '/' primario 
-       |  produto '*' primario
-       |  primario
-       ;
-
-primario: '!' primario
-        |  '-' primario
-        | '(' expressao ')'
-        | TK_IDENTIFICADOR | TK_LIT_FLOAT | TK_LIT_INT | chamada_funcao
-        ;
-
+//Expressões
+expr: expr_or;
+expr_or: expr_or TK_OC_OR expr_and | expr_and;
+expr_and: expr_and TK_OC_AND expr_eq | expr_eq;
+op_eq: TK_OC_EQ | TK_OC_NE;
+expr_eq: expr_eq op_eq expr_cmp | expr_cmp;
+op_cmp: '<' | '>' | TK_OC_LE | TK_OC_GE;
+expr_cmp: expr_cmp op_cmp expr_sum | expr_sum;
+op_sum: '+' | '-';
+expr_sum: expr_sum op_sum expr_mult | expr_mult;
+op_mult: '*' | '/' | '%' ;
+expr_mult: expr_mult op_mult expr_unaria | expr_unaria;
+op_unario: '!' | '-'; 
+expr_unaria: op_unario expr_unaria | parenteses;
+parenteses: '(' expr ')' | op;
+op: TK_IDENTIFICADOR | literal | chamada_funcao;
 
 %%
 
