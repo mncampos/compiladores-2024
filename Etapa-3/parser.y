@@ -4,6 +4,7 @@
 // GUILHERME DE SOUSA CIRUMBOLO - 00330049
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 int yylex(void);
 void yyerror (char const *mensagem);
@@ -115,8 +116,8 @@ corpo: bloco_comandos;
 
 //Tipos e Literais
 
-literal: TK_LIT_INT       
-       | TK_LIT_FLOAT     
+literal: TK_LIT_INT     { $$ = new_node($1); }
+       | TK_LIT_FLOAT   { $$ = new_node($1); }
 
 tipo: TK_PR_INT 
     | TK_PR_FLOAT;
@@ -125,48 +126,72 @@ tipo: TK_PR_INT
 /* Um bloco de comandos é definido entre chaves, e consiste em uma sequência, possivelmente vazia, de comandos simples cada um terminado por
  ponto-e-vírgula. Um bloco de comandos é considerado como umcomandoúnico simples, recursivamente,
  e pode ser utilizado em qualquer construção que aceite um comando simples. */
-bloco_comandos: '{' lista_de_comandos '}' 
-              | '{' '}';
+bloco_comandos: '{' lista_de_comandos '}' {$$ = $2;}
+              | '{' '}';                  {$$ = NULL;}
 
 
 /*  Os comandos simples da linguagem podem ser:
  declaração de variável, atribuição, construções de f luxo de controle, operação de retorno, um bloco de comandos, e chamadas de função */
-comando: declaracao_variavel 
-       | bloco_comandos 
-       | chamada_funcao 
-       | retorno 
-       | controle_fluxo
-       | atribuicao;
+comando: declaracao_variavel {$$ = $1; }
+       | bloco_comandos      {$$ = $1; }
+       | chamada_funcao      {$$ = $1; }
+       | retorno             {$$ = $1; }
+       | controle_fluxo      {$$ = $1; }
+       | atribuicao;         {$$ = $1; }
 
-lista_de_comandos: comando ';' lista_de_comandos 
-                 | comando ';';
+lista_de_comandos: lista_de_comandos comando ';' { if($2 != NULL){
+                                                   $$ = $2;
+                                                   add_child($$, $1);
+                                                  }}
+                 | comando ';';                  {$$ = $1; }
 
 // Variáveis
 
 /*  Declaração de Variável: Consiste no tipo da variável seguido de uma lista composta de pelo menos um nome de variável (identificador) separadas por vírgula. Os tipos podem ser int e float.
  Uma variável pode ser opcionalmente inicializada caso sua declaração seja seguida do operador composto TK_OC_LE e de um literal. */
-declaracao_variavel: tipo lista_variaveis
+declaracao_variavel: tipo lista_variaveis { $$ = $2; }
 
-lista_variaveis: TK_IDENTIFICADOR ',' lista_variaveis 
-               | TK_IDENTIFICADOR TK_OC_LE literal ',' lista_variaveis 
-               | TK_IDENTIFICADOR TK_OC_LE literal
-               | TK_IDENTIFICADOR;
+variavel: TK_IDENTIFICADOR                         {$$ = NULL; }
+        | TK_IDENTIFICADOR TK_OC_LE literal        {$$ = new_simple_node($2);
+                                                    Node* new_node = new_node($1);
+                                                    add_child($$, new_node); 
+                                                    add_child($$, $3);
+                                                    }
+
+lista_variaveis: lista_variaveis ',' variavel      { if($3 != NULL){
+                                                       $$ = $3;
+                                                       add_child($$, $1);
+                                                    }}
+               | variavel                          {
+                                                     if($1 != NULL){
+                                                        $$ = $1;
+                                                     }}
 
 //Atribuicao
 /* O comando de atribuição consiste em um identificador seguido pelo caractere de igualdade seguido por uma expressão. */
-atribuicao: TK_IDENTIFICADOR '=' expr 
+atribuicao: TK_IDENTIFICADOR '=' expr { $$ = new_simple_node($2);
+                                        add_child($$, new_node($1));
+                                        add_child($$, $3);
+                                        }
                                     
 
 //Chamada de função
 /* Uma chamada de função consiste no nome da função, seguida de argumentos entre parênteses separados por vírgula. Um argumento pode ser uma expressão. */
-chamada_funcao: TK_IDENTIFICADOR '(' lista_args ')'; 
+chamada_funcao: TK_IDENTIFICADOR '(' lista_args ')' { size_t new_length = strlen($1->value) + strlen("call ") + 1;
+                                                      char* buffer = malloc(new_length);
+                                                      if(buffer){
+                                                        snprintf(buffer, new_length, "call %s", $1->value);
+                                                        $$ = new_simple_node(buffer);
+                                                        add_child($$, $3);
+                                                      }
+                                                    }
 
-lista_args: expr ',' lista_args 
-          | expr;
+lista_args: lista_args ',' expr { $$ = $3; add_child($$, $1); }
+          | expr                { $$ = $1; }
 
 // Comando de Retorno
 /* Trata-se do token return seguido de uma expressão. */
-retorno: TK_PR_RETURN expr 
+retorno: TK_PR_RETURN expr   { $$ = new_simple_node($1); add_child($$, $2); }
 
 
 //Controle de fluxo
@@ -174,13 +199,30 @@ retorno: TK_PR_RETURN expr
  possui uma construção condicional e uma iterativa para controle estruturado de fluxo. A condicional consiste no token if seguido de uma expressão entre parênteses e então por um bloco de
  comandos obrigatório. O else, sendo opcional, deve sempre aparecer após o bloco do if, e é seguido de um bloco de comandos, obrigatório caso o else seja empregado. Temos apenas uma cons
 trução de repetição que é o token while seguido de uma expressão entre parênteses e de um bloco de comandos */
-controle_fluxo: if 
-              | while;
+controle_fluxo: if    { $$ = $1; }
+              | while { $$ = $1; }
 
-if: TK_PR_IF '(' expr ')' corpo 
-  | TK_PR_IF '(' expr ')' corpo TK_PR_ELSE corpo ;
+if: TK_PR_IF '(' expr ')' bloco_comandos                                { $$ = new_simple_node($1); 
+                                                                          add_child($$, $3); 
+                                                                          if($5 != NULL){
+                                                                          add_child($$, $5);
+                                                                        }}
 
-while: TK_PR_WHILE  '(' expr ')' corpo ; 
+  | TK_PR_IF '(' expr ')' bloco_comandos TK_PR_ELSE bloco_comandos     { $$ = new_simple_node($1);
+                                                                         new_node($$, $3);
+                                                                         if($5 != NULL){
+                                                                            add_child($$, $5);
+                                                                         }
+                                                                         if($7 != NULL){
+                                                                            add_child($$, $7);
+                                                                        }}
+
+
+while: TK_PR_WHILE  '(' expr ')' bloco_comandos                        { $$ = new_simple_node($1); 
+                                                                         add_child($$, $3);
+                                                                         if($5 != NULL){
+                                                                         add_child($$, $5);
+                                                                       }}
 
 //Expressões
 /*  Expressões tem operandos e operadores, sendo este opcional. Os operandos podem ser (a) identificadores, (b) literais e (c) chamada de função ou (d) outras expressões, podendo portanto ser for
