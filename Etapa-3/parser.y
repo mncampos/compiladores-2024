@@ -94,10 +94,15 @@ programa: lista_funcoes { $$ = $1; arvore = $$; }
 /*  Cada função é definida por um cabeçalho e um
  corpo. */
 
-lista_funcoes:  lista_funcoes funcao 
-             | funcao
+lista_funcoes:  lista_funcoes funcao { $$ = $1;
+    add_child($$, $2); }
+             | funcao { $$ = $1; }
 
-funcao: cabecalho corpo
+funcao: cabecalho corpo {
+    $$ = new_node($1);
+    add_child($$, $1); // Cabeçalho
+    add_child($$, $2); // Corpo
+}
 
 
 /*  O cabeçalho consiste no nome da função,  o caractere igual ’=’, uma lista de parâmetros, o
@@ -105,11 +110,15 @@ funcao: cabecalho corpo
   é composta por zero ou mais parâmetros de entrada, separados por TK_OC_OR. Cada parâmetro é definido
    pelo seu nome seguido do caractere menor ’<’, seguido do caractere menos ’-’, seguido do tipo. */
 
-cabecalho: TK_IDENTIFICADOR parametros tipo
-parametros : '='lista_parametros'>';
-lista_parametros: TK_IDENTIFICADOR '<' '-' tipo TK_OC_OR lista_parametros 
-                | TK_IDENTIFICADOR '<' '-' tipo 
-                | /* vazio */
+cabecalho: TK_IDENTIFICADOR parametros tipo { $$ = new_simple_node($1); 
+                                              add_child_safe($$, $2); 
+                                              add_child_safe($$, $3); }
+
+parametros : '='lista_parametros'>' { $$ = $2; }
+
+lista_parametros: TK_IDENTIFICADOR '<' '-' tipo TK_OC_OR lista_parametros { $$ = $6; add_child($$, $4); add_child($$, $1); }
+                | TK_IDENTIFICADOR '<' '-' tipo { $$ = $4; add_child($$, $1); }
+                | /* vazio */ { $$ = NULL; }
 
 /*O corpo da função é um bloco de comandos. */
 corpo: bloco_comandos;
@@ -119,8 +128,8 @@ corpo: bloco_comandos;
 literal: TK_LIT_INT     { $$ = new_node($1); }
        | TK_LIT_FLOAT   { $$ = new_node($1); }
 
-tipo: TK_PR_INT 
-    | TK_PR_FLOAT;
+tipo: TK_PR_INT { $$ = new_simple_node($1); }
+    | TK_PR_FLOAT; { $$ = new_simple_node($1); }
 
 // Bloco de Comandos
 /* Um bloco de comandos é definido entre chaves, e consiste em uma sequência, possivelmente vazia, de comandos simples cada um terminado por
