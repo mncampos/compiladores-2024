@@ -23,8 +23,9 @@ void free_ast(Node* root);
 //Adiciona um filho a um nó na árvore
 void add_child(Node* parent, Node* child);
 
-//Exporta a árvore
-void exporta(void* arvore);
+// Funçoes do professor
+void asd_print(Node *tree);
+void asd_print_graphviz(Node *tree);
 
 
 
