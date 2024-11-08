@@ -39,16 +39,15 @@ extern void *arvore;
 %token<valor_lexico> TK_LIT_INT
 %token<valor_lexico> TK_LIT_FLOAT
 
-%type<valor_lexico> literal
+%type<tree> literal
 %type<tree> programa
 %type<tree> lista_funcoes
 %type<tree> funcao
 %type<tree> cabecalho
-%type<tree> lista_parametros
 %type<tree> corpo
-%type<tree> tipo
 %type<tree> bloco_comandos
 %type<tree> comando
+%type<tree> comandos
 %type<tree> lista_de_comandos
 %type<tree> declaracao_variavel
 %type<tree> variavel
@@ -82,22 +81,21 @@ extern void *arvore;
  lista de funções, sendo esta lista opcional. */
 
 programa: lista_funcoes { $$ = $1; arvore = $$; }
-        | /* vazio */   { $$ = NULL; }
+        | /* vazio */   { $$ = NULL; arvore = $$; }
 
 // Funções
 
 /*  Cada função é definida por um cabeçalho e um
  corpo. */
 
-lista_funcoes: lista_funcoes funcao { $$ = $1;
+lista_funcoes: funcao lista_funcoes { $$ = $1;
                                       add_child($$, $2);
                                      }
              | funcao { $$ = $1; }
 
 funcao: cabecalho corpo {
-    $$ = new_node($1->lex_value);
-    add_child($$, $1); // Cabeçalho
-    add_child($$, $2); // Corpo
+       $$ = $1;
+       add_child($$, $2);
 }
 
 
@@ -107,59 +105,49 @@ funcao: cabecalho corpo {
    pelo seu nome seguido do caractere menor ’<’, seguido do caractere menos ’-’, seguido do tipo. */
 
 cabecalho: TK_IDENTIFICADOR '=' lista_parametros '>' tipo {   
-                                                                $$ = new_node($1);      
-                                                                add_child($$, $3);      
-                                                                add_child($$, $5); 
+                                                               $$ = new_node($1); 
                                                           } 
 
 
-lista_parametros: lista_parametros TK_OC_OR TK_IDENTIFICADOR '<' '-' tipo {
-                     $$ = $1;  
-                     Node* param_node = new_node($3); 
-                     add_child(param_node, $6);      
-                     add_child($$, param_node);      
-                  }
-                | TK_IDENTIFICADOR '<' '-' tipo {
-                     $$ = new_simple_node("parametros");
-                     Node* param_node = new_node($1);
-                     add_child(param_node, $4); 
-                     add_child($$, param_node); 
-                  }
-                | /* vazio */ { $$ = NULL; }  
+lista_parametros: lista_parametros TK_OC_OR TK_IDENTIFICADOR '<' '-' tipo 
+                | TK_IDENTIFICADOR '<' '-' tipo 
+                | /* vazio */ 
 
 /*O corpo da função é um bloco de comandos. */
-corpo: bloco_comandos;
+corpo: bloco_comandos {$$ = $1;}
 
 //Tipos e Literais
 
-literal: TK_LIT_INT     { $$ = $1; }
-       | TK_LIT_FLOAT   { $$ = $1; }
+literal: TK_LIT_INT     { $$ = new_node($1); }
+       | TK_LIT_FLOAT   { $$ = new_node($1); }
 
-tipo: TK_PR_INT         { $$ = NULL; }
-    | TK_PR_FLOAT       { $$ = NULL; }
+tipo: TK_PR_INT        
+    | TK_PR_FLOAT       
 
 // Bloco de Comandos
 /* Um bloco de comandos é definido entre chaves, e consiste em uma sequência, possivelmente vazia, de comandos simples cada um terminado por
  ponto-e-vírgula. Um bloco de comandos é considerado como umcomandoúnico simples, recursivamente,
  e pode ser utilizado em qualquer construção que aceite um comando simples. */
 bloco_comandos: '{' lista_de_comandos '}' {$$ = $2;}
-              | '{' '}'                  {$$ = NULL;}
 
 
 /*  Os comandos simples da linguagem podem ser:
  declaração de variável, atribuição, construções de f luxo de controle, operação de retorno, um bloco de comandos, e chamadas de função */
-comando: declaracao_variavel {$$ = $1; }
-       | bloco_comandos      {$$ = $1; }
+comando: comandos ';' {$$ = $1;}
+
+
+comandos: declaracao_variavel { if($1 != NULL) $$ = $1; }
+       | bloco_comandos      { if($1 != NULL) $$ = $1; }
        | chamada_funcao      {$$ = $1; }
        | retorno             {$$ = $1; }
        | controle_fluxo      {$$ = $1; }
        | atribuicao         {$$ = $1; }
 
-lista_de_comandos: lista_de_comandos comando ';' { if($2 != NULL){
-                                                   $$ = $2;
-                                                   add_child($$, $1);
-                                                  }}
-                 | comando ';'                  {$$ = $1; }
+lista_de_comandos: comando lista_de_comandos { if($1 != NULL){
+                                                   $$ = $1;
+                                                   add_child($$, $2);
+                                                 } else $$ = $2;}
+                 | /* vazio */                  {$$ = NULL; }
 
 // Variáveis
 
@@ -171,8 +159,7 @@ variavel: TK_IDENTIFICADOR                         {$$ = NULL; }
         | TK_IDENTIFICADOR TK_OC_LE literal        {$$ = new_simple_node("<=");
                                                     Node* new = new_node($1);
                                                     add_child($$, new); 
-                                                    Node* newvalue = new_node($3);
-                                                    add_child($$, newvalue);
+                                                    add_child($$, $3);
                                                     }
 
 lista_variaveis: lista_variaveis ',' variavel      { if($3 != NULL){
@@ -203,8 +190,9 @@ chamada_funcao: TK_IDENTIFICADOR '(' lista_args ')' { size_t new_length = strlen
                                                       }
                                                     }
 
-lista_args: lista_args ',' expr { $$ = $3; add_child($$, $1); }
-          | expr                { $$ = $1; }
+lista_args: expr                { $$ = $1; }
+          | expr ',' lista_args { $$ = $1; add_child($$, $3); }
+          
 
 // Comando de Retorno
 /* Trata-se do token return seguido de uma expressão. */
@@ -223,7 +211,8 @@ if: TK_PR_IF '(' expr ')' bloco_comandos                                { $$ = n
                                                                           add_child($$, $3); 
                                                                           if($5 != NULL){
                                                                           add_child($$, $5);
-                                                                        }}
+                                                                        };
+                                                                        }
 
   | TK_PR_IF '(' expr ')' bloco_comandos TK_PR_ELSE bloco_comandos     { $$ = new_simple_node("if");
                                                                          add_child($$, $3);
@@ -280,7 +269,7 @@ parenteses: '(' expr ')'             { $$ = $2; }
           | op                       {$$ = $1; }
 
 op: TK_IDENTIFICADOR                 { $$ = new_node($1); }
-  | literal                          { $$ = new_node($1);}
+  | literal                          { $$ = $1; }
   | chamada_funcao                   { $$ = $1;}
 
 %%

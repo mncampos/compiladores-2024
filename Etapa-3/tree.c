@@ -73,26 +73,43 @@ void add_child(Node *parent, Node *child)
     parent->children_quantity++;
 }
 
-void exporta(void *arvore)
+static void _asd_print (FILE *foutput, Node* tree, int profundidade)
 {
-    if (arvore == NULL)
-        return;
-    Node *root = (Node *)arvore;
-
-    if (root->lex_value != NULL)
-    {
-        printf("%p [label=\"%s\"];\n", (void *)root, root->lex_value->value);
+  int i;
+  if (tree != NULL){
+    fprintf(foutput, "%d%*s: Nó '%s' tem %d filhos:\n", profundidade, profundidade*2, "", tree->lex_value->value, tree->children_quantity);
+    for (i = 0; i < tree->children_quantity; i++){
+      _asd_print(foutput, tree->children[i], profundidade+1);
     }
-    else
-    {
-        printf("%p [label=\"<NULL>\"];\n", (void *)root);
-    }
-    for (int i = 0; i < root->children_quantity; i++)
-    {
-        printf("%p, %p\n", (void *)root, (void *)(root->children[i]));
-    }
-    for (int i = 0; i < root->children_quantity; i++)
-    {
-        exporta(root->children[i]);
-    }
+  }
 }
+
+void asd_print(Node *tree)
+{
+  FILE *foutput = stderr;
+  if (tree != NULL){
+    _asd_print(foutput, tree, 0);
+  }else{
+    printf("Erro: %s recebeu parâmetro tree = %p.\n", __FUNCTION__, tree);
+  }
+}
+
+static void _asd_print_graphviz (Node *tree)
+{
+  int i;
+  if (tree != NULL){
+    printf("  %p [label=\"%s\"];\n", tree, tree->lex_value->value);
+    for (i = 0; i < tree->children_quantity; i++){
+      printf("  %p,%p\n", tree, tree->children[i]);
+      _asd_print_graphviz(tree->children[i]);
+    }
+  }
+}
+
+void asd_print_graphviz(Node *tree)
+{
+  if (tree != NULL){
+    _asd_print_graphviz(tree);
+  }
+}
+
