@@ -367,12 +367,12 @@ expr_and:
 
 expr_eq:
     expr_eq TK_OC_EQ expr_cmp {
-        $$ = new_simple_node("=");
+        $$ = new_simple_node("==");
         add_child($$, $1);
         add_child($$, $3);
     }
     | expr_eq TK_OC_NE expr_cmp {
-        $$ = new_simple_node("!");
+        $$ = new_simple_node("!=");
         add_child($$, $1);
         add_child($$, $3);
     }
