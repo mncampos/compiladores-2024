@@ -1,4 +1,5 @@
 #include "../include/symbol_table.h"
+#include "symbol_table.h"
 
 SymbolTable *create_symbol_table(size_t initial_capacity)
 {
@@ -36,19 +37,43 @@ void free_symbol_table(SymbolTable *table)
     free(table);
 }
 
-int insert_symbol(SymbolTable *table, TableData entry)
+ int resize_symbol_table(SymbolTable *table)
+{
+    size_t new_capacity = table->capacity * 2;
+    TableData *new_data = realloc(table->data, new_capacity * sizeof(TableData));
+    if (!new_data)
+    {
+        return 0;
+    }
+    table->data = new_data;
+    table->capacity = new_capacity;
+    return 1;
+}
+
+int insert_symbol(SymbolTable *table, unsigned int line_number, int value_type, int symbol_type, char *lex_value)
 {
     if (table->size >= table->capacity)
     {
-        size_t new_capacity = table->capacity * 2;
-        TableData *new_data = (TableData *)realloc(table->data, new_capacity * sizeof(TableData));
-        if (!new_data)
+        if (!resize_symbol_table(table))
+        {
             return -1;
-        table->data = new_data;
-        table->capacity = new_capacity;
+        }
     }
-    table->data[table->size++] = entry;
-    return 0;
+
+    TableData *entry = &table->data[table->size];
+    entry->line_number = line_number;
+    entry->value_type = (Kind)value_type;
+    entry->symbol_type = (DataType)symbol_type;
+
+    entry->lex_value = malloc(strlen(lex_value) + 1);
+    if (!entry->lex_value)
+    {
+        return -1;
+    }
+    strcpy(entry->lex_value, lex_value);
+
+    table->size++;
+    return 1;
 }
 
 TableData *find_symbol(const SymbolTable *table, const char *lex_value)
@@ -62,3 +87,35 @@ TableData *find_symbol(const SymbolTable *table, const char *lex_value)
     }
     return NULL;
 }
+
+void print_symbol_table(const SymbolTable *table) {
+    if (!table || table->size == 0) {
+        printf("The symbol table is empty.\n");
+        return;
+    }
+
+    printf("Symbol Table:\n");
+    printf("+-----+----------------+------------+-------------+----------------+\n");
+    printf("| No. | Line Number    | Kind       | Data Type   | Lexical Value  |\n");
+    printf("+-----+----------------+------------+-------------+----------------+\n");
+
+    for (size_t i = 0; i < table->size; i++) {
+        TableData *entry = &table->data[i];
+        
+        const char *value_type_str = 
+            (entry->value_type == IDENTIFIER) ? "Identifier" : "Function";
+        
+        const char *symbol_type_str = 
+            (entry->symbol_type == 1) ? "Int" : "Float";
+
+        printf("| %-3zu | %-14u | %-10s | %-11s | %-14s |\n", 
+               i + 1, 
+               entry->line_number, 
+               value_type_str, 
+               symbol_type_str, 
+               entry->lex_value);
+    }
+
+    printf("+-----+----------------+------------+-------------+----------------+\n");
+}
+

@@ -5,15 +5,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../include/stack.h"
 
 int yylex(void);
 void yyerror (char const *mensagem);
 extern int yylineno;
 extern char **ytext;
 extern void *arvore;
+extern Stack *table_stack;
 %}
 
 %code requires { #include "../include/tree.h" }
+%code requires { #include "../include/stack.h" }
 %union {
      TypeLex* valor_lexico;
      Node* tree;
@@ -21,8 +24,7 @@ extern void *arvore;
 
 %define parse.error verbose
 
-%token TK_PR_INT
-%token TK_PR_FLOAT
+
 %token TK_PR_IF
 %token TK_PR_ELSE
 %token TK_PR_WHILE
@@ -38,7 +40,10 @@ extern void *arvore;
 %token<valor_lexico> TK_IDENTIFICADOR
 %token<valor_lexico> TK_LIT_INT
 %token<valor_lexico> TK_LIT_FLOAT
+%token<valor_lexico> TK_PR_INT
+%token<valor_lexico> TK_PR_FLOAT
 
+%type<valor_lexico> tipo
 %type<tree> literal
 %type<tree> programa
 %type<tree> lista_funcoes
@@ -71,6 +76,8 @@ extern void *arvore;
 %type<tree> op
 
 
+%start begin_program;
+
 %%
 
 // Definição da gramática
@@ -80,8 +87,12 @@ extern void *arvore;
 /* Um programa na linguagem é composto por uma
  lista de funções, sendo esta lista opcional. */
 
+begin_program: criar_pilha_tabelas empilha_tabela  programa
+
+
+
 programa:
-    lista_funcoes {
+    lista_funcoes desempilha_tabela  {
         $$ = $1;
         arvore = $$;
     }
@@ -89,6 +100,11 @@ programa:
         $$ = NULL;
         arvore = $$;
     }
+
+
+criar_pilha_tabelas : {table_stack = create_stack(1);}
+empilha_tabela : {push_stack(table_stack, create_symbol_table(1));}
+desempilha_tabela : {pop_stack(table_stack);}
 
 
 // Funções
@@ -106,7 +122,7 @@ lista_funcoes:
     }
 
 funcao:
-    cabecalho corpo {
+    cabecalho corpo desempilha_tabela {
         $$ = $1;
         add_child($$, $2);
     }
@@ -117,8 +133,10 @@ funcao:
    pelo seu nome seguido do caractere menor ’<’, seguido do caractere menos ’-’, seguido do tipo. */
 
 cabecalho:
-    TK_IDENTIFICADOR '=' lista_parametros '>' tipo {
+    TK_IDENTIFICADOR '=' empilha_tabela lista_parametros '>' tipo {
         $$ = new_node($1);
+        
+        insert_symbol(peek_stack(table_stack, 2), $1->line, FUNCTION, $6->type, $1->value);
     }
 
 lista_parametros:

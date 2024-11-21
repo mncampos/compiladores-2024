@@ -19,4 +19,4 @@ typedef struct TypeLex {
 // Função para criar um novo tipo léxico
 TypeLex* new_lex_type(int line, int type, char* value);
 
-#endif
+#endif // TYPE_LEX_H

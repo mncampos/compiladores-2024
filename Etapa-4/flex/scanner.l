@@ -22,8 +22,8 @@ SPECIAL_CHARACTERS [-!*\/%+<>{}()=,;]
 {SPACE} {}
 
 
-"int" {return TK_PR_INT; }
-"float" { return TK_PR_FLOAT; }
+"int" { yylval.valor_lexico = new_lex_type(get_line_number(), LEX_LIT_INT, strdup(yytext)); return TK_PR_INT; }
+"float" { yylval.valor_lexico = new_lex_type(get_line_number(), LEX_LIT_FLOAT, strdup(yytext)); return TK_PR_FLOAT; }
 "if" { return TK_PR_IF; }
 "else" { return TK_PR_ELSE; }
 "while" { return TK_PR_WHILE; }
@@ -43,8 +43,7 @@ SPECIAL_CHARACTERS [-!*\/%+<>{}()=,;]
 [0-9]*\.[0-9]+ {yylval.valor_lexico = new_lex_type(get_line_number(), LEX_LIT_FLOAT, strdup(yytext)); return TK_LIT_FLOAT; }
 
 
-    /* Regra dos Identificadores  */
-    
+    /* Regra dos Identificadores */
 ([a-z]|_)([a-z]|[0-9]|_)* { yylval.valor_lexico = new_lex_type(get_line_number(), LEX_IDENTIFIER, strdup(yytext)); return TK_IDENTIFICADOR; }
 
 {SPECIAL_CHARACTERS} { return yytext[0]; }
