@@ -17,5 +17,6 @@ int main (int argc, char **argv)
   exporta (arvore);
   yylex_destroy();
   free_ast(arvore);
+  free_stack(table_stack);
   return ret;
 }

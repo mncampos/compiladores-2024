@@ -140,15 +140,14 @@ cabecalho:
     }
 
 lista_parametros:
-    lista_parametros TK_OC_OR TK_IDENTIFICADOR '<' '-' tipo
-    | TK_IDENTIFICADOR '<' '-' tipo
+    lista_parametros TK_OC_OR TK_IDENTIFICADOR '<' '-' tipo {insert_symbol(peek_stack(table_stack,1), $3->line, IDENTIFIER, $6->type, $3->value ); }
+    | TK_IDENTIFICADOR '<' '-' tipo {insert_symbol(peek_stack(table_stack,1), $1->line, IDENTIFIER, $4->type, $1->value );  }
     | /* vazio */
 
 
 /*O corpo da função é um bloco de comandos. */
-corpo:
-    bloco_comandos {
-        $$ = $1;
+corpo: '{' lista_de_comandos '}' {
+        $$ = $2;
     }
 
 
@@ -172,8 +171,8 @@ tipo:
  ponto-e-vírgula. Um bloco de comandos é considerado como umcomandoúnico simples, recursivamente,
  e pode ser utilizado em qualquer construção que aceite um comando simples. */
 bloco_comandos:
-    '{' lista_de_comandos '}' {
-        $$ = $2;
+    '{' empilha_tabela lista_de_comandos desempilha_tabela '}' {
+        $$ = $3;
     }
 
 /*  Os comandos simples da linguagem podem ser:

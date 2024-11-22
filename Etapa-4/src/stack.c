@@ -65,3 +65,16 @@ SymbolTable* peek_stack(const Stack* stack, unsigned short level) {
 
     return stack->tables[stack->size - level];
 }
+
+void print_all_tables(const Stack* stack) {
+    if (stack == NULL || stack->tables == NULL) {
+        printf("Stack is empty or uninitialized.\n");
+        return;
+    }
+
+    printf("Stack contains %zu tables:\n", stack->size);
+    for (size_t i = 0; i < stack->size; i++) {
+        print_symbol_table(stack->tables[i]);
+        printf("\n");
+    }
+}

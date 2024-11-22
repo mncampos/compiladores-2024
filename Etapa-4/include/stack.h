@@ -17,4 +17,7 @@ int push_stack(Stack* stack, SymbolTable* table);
 SymbolTable* pop_stack(Stack* stack);
 SymbolTable* peek_stack(const Stack* stack, unsigned short level);
 
+void print_all_tables(const Stack* stack);
+
+
 #endif //STACK_H
