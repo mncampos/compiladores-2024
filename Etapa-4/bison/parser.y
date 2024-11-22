@@ -326,7 +326,7 @@ lista_args:
 retorno:
     TK_PR_RETURN expr {
         $$ = new_simple_node("return");
-        $$->lex_value->type = typeInfer($3);
+        $$->lex_value->type = typeInfer($2);
         add_child($$, $2);
     }
 
