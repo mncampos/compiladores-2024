@@ -135,6 +135,7 @@ funcao:
 
 cabecalho:
     TK_IDENTIFICADOR '=' empilha_tabela lista_parametros '>' tipo {
+        
         $$ = new_node($1);
         
         isAlreadyDeclared(table_stack, $1->value, $1->line);
@@ -242,7 +243,7 @@ lista_de_comandos:
  Uma variável pode ser opcionalmente inicializada caso sua declaração seja seguida do operador composto TK_OC_LE e de um literal. */
 declaracao_variavel:
     tipo lista_variaveis {
-                current_type = $1->type;
+        current_type = $1->type;
         $$ = $2;
     }
 
@@ -283,12 +284,15 @@ variavel:
 atribuicao:
     TK_IDENTIFICADOR '=' expr {
 
-        isUndeclared(table_stack, $1->value, $1->line);
-        isKindCorrect(table_stack, $1->value, IDENTIFIER, $1->line);
-
         $$ = new_simple_node("=");
         add_child($$, new_node($1));
         add_child($$, $3);
+
+        $1->type = typeInfer($$);
+        isUndeclared(table_stack, $1->value, $1->line);
+        isKindCorrect(table_stack, $1->value, IDENTIFIER, $1->line);
+
+
     }
 
 // Chamada de função
@@ -322,6 +326,7 @@ lista_args:
 retorno:
     TK_PR_RETURN expr {
         $$ = new_simple_node("return");
+        $$->lex_value->type = typeInfer($3);
         add_child($$, $2);
     }
 
@@ -343,6 +348,7 @@ controle_fluxo:
 if:
     TK_PR_IF '(' expr ')' bloco_comandos {
         $$ = new_simple_node("if");
+        $$->lex_value->type = typeInfer($3);
         add_child($$, $3);
         if ($5 != NULL) {
             add_child($$, $5);
@@ -350,6 +356,7 @@ if:
     }
     | TK_PR_IF '(' expr ')' bloco_comandos TK_PR_ELSE bloco_comandos {
         $$ = new_simple_node("if");
+        $$->lex_value->type = typeInfer($3);
         add_child($$, $3);
         if ($5 != NULL) {
             add_child($$, $5);
@@ -362,6 +369,7 @@ if:
 while:
     TK_PR_WHILE '(' expr ')' bloco_comandos {
         $$ = new_simple_node("while");
+        $$->lex_value->type = typeInfer($3);
         add_child($$, $3);
         if ($5 != NULL) {
             add_child($$, $5);
@@ -496,8 +504,10 @@ parenteses:
 
 op:
     TK_IDENTIFICADOR {
+        
         isUndeclared(table_stack, $1->value, $1->line);
         isKindCorrect(table_stack,$1->value, IDENTIFIER, $1->line);
+        $1->type = getType(peek_stack(table_stack, 1), $1->value);
         $$ = new_node($1);
     }
     | literal {

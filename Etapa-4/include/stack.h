@@ -22,6 +22,7 @@ int push_stack(Stack* stack, SymbolTable* table);
 SymbolTable* pop_stack(Stack* stack);
 SymbolTable* peek_stack(const Stack* stack, unsigned short level);
 
+
 //Error handling
 void isAlreadyDeclared(const Stack* stack, char* lex_value, int lineno);
 void isUndeclared(const Stack* stack, char* lex_value, int lineno);

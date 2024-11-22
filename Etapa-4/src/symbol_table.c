@@ -88,6 +88,18 @@ TableData *find_symbol(const SymbolTable *table, const char *lex_value)
     return NULL;
 }
 
+DataType getType(const SymbolTable *table, const char *lex_value)
+{
+     for (size_t i = 0; i < table->size; ++i)
+         {
+        if (strcmp(table->data[i].lex_value, lex_value) == 0)
+        {
+            return table->data[i].symbol_type;
+        }
+    }
+    return -1;
+}
+
 void print_symbol_table(const SymbolTable *table)
 {
     if (!table || table->size == 0)

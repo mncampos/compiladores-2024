@@ -23,6 +23,11 @@ void free_ast(Node* root);
 //Adiciona um filho a um nó na árvore
 void add_child(Node* parent, Node* child);
 
+//Infere o tipo de um nodo raiz de expressão
+int typeInfer(Node* root);
+
+
+
 // Funçoes do professor
 void asd_print(Node *tree);
 void asd_print_graphviz(Node *tree);

@@ -43,6 +43,7 @@ void free_symbol_table(SymbolTable *table);
 int insert_symbol(SymbolTable *table, unsigned int line_number, int value_type, int symbol_type, char * lex_value);
 int resize_symbol_table(SymbolTable *table);
 TableData *find_symbol(const SymbolTable *table, const char *lex_value);
+DataType getType(const SymbolTable* table, const char *lex_value);
 
 //debug
 
