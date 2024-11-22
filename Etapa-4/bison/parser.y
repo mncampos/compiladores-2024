@@ -13,6 +13,7 @@ extern int yylineno;
 extern char **ytext;
 extern void *arvore;
 extern Stack *table_stack;
+DataType current_type = -1;
 %}
 
 %code requires { #include "../include/tree.h" }
@@ -136,12 +137,13 @@ cabecalho:
     TK_IDENTIFICADOR '=' empilha_tabela lista_parametros '>' tipo {
         $$ = new_node($1);
         
+        isAlreadyDeclared(table_stack, $1->value, $1->line);
         insert_symbol(peek_stack(table_stack, 2), $1->line, FUNCTION, $6->type, $1->value);
     }
 
 lista_parametros:
-    lista_parametros TK_OC_OR TK_IDENTIFICADOR '<' '-' tipo {insert_symbol(peek_stack(table_stack,1), $3->line, IDENTIFIER, $6->type, $3->value ); }
-    | TK_IDENTIFICADOR '<' '-' tipo {insert_symbol(peek_stack(table_stack,1), $1->line, IDENTIFIER, $4->type, $1->value );  }
+    lista_parametros TK_OC_OR TK_IDENTIFICADOR '<' '-' tipo { isAlreadyDeclared(table_stack, $3->value, $3->line); insert_symbol(peek_stack(table_stack,1), $3->line, IDENTIFIER, $6->type, $3->value ); }
+    | TK_IDENTIFICADOR '<' '-' tipo {isAlreadyDeclared(table_stack, $1->value, $1->line); insert_symbol(peek_stack(table_stack,1), $1->line, IDENTIFIER, $4->type, $1->value );  }
     | /* vazio */
 
 
@@ -240,6 +242,7 @@ lista_de_comandos:
  Uma variável pode ser opcionalmente inicializada caso sua declaração seja seguida do operador composto TK_OC_LE e de um literal. */
 declaracao_variavel:
     tipo lista_variaveis {
+                current_type = $1->type;
         $$ = $2;
     }
 
@@ -261,12 +264,17 @@ lista_variaveis:
 variavel:
     TK_IDENTIFICADOR {
         $$ = NULL;
+        isAlreadyDeclared(table_stack, $1->value, $1->line);
+        insert_symbol(peek_stack(table_stack, 1), $1->line, IDENTIFIER, current_type, $1->value);
     }
     | TK_IDENTIFICADOR TK_OC_LE literal {
         $$ = new_simple_node("<=");
         Node* new = new_node($1);
         add_child($$, new);
         add_child($$, $3);
+
+        isAlreadyDeclared(table_stack, $1->value, $1->line);
+        insert_symbol(peek_stack(table_stack, 1), $1->line, IDENTIFIER, current_type, $1->value);
     }
 
 
@@ -274,6 +282,10 @@ variavel:
 /* O comando de atribuição consiste em um identificador seguido pelo caractere de igualdade seguido por uma expressão. */
 atribuicao:
     TK_IDENTIFICADOR '=' expr {
+
+        isUndeclared(table_stack, $1->value, $1->line);
+        isKindCorrect(table_stack, $1->value, IDENTIFIER, $1->line);
+
         $$ = new_simple_node("=");
         add_child($$, new_node($1));
         add_child($$, $3);
@@ -283,6 +295,10 @@ atribuicao:
 /* Uma chamada de função consiste no nome da função, seguida de argumentos entre parênteses separados por vírgula. Um argumento pode ser uma expressão. */
 chamada_funcao:
     TK_IDENTIFICADOR '(' lista_args ')' {
+
+        isUndeclared(table_stack, $1->value, $1->line);
+        isKindCorrect(table_stack, $1->value, FUNCTION, $1->line);
+
         size_t new_length = strlen($1->value) + strlen("call ") + 1;
         char* buffer = malloc(new_length);
         if (buffer) {
@@ -480,6 +496,8 @@ parenteses:
 
 op:
     TK_IDENTIFICADOR {
+        isUndeclared(table_stack, $1->value, $1->line);
+        isKindCorrect(table_stack,$1->value, IDENTIFIER, $1->line);
         $$ = new_node($1);
     }
     | literal {

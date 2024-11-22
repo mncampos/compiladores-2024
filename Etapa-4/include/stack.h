@@ -5,6 +5,11 @@
 #include <stdlib.h>
 #include "symbol_table.h" 
 
+#define ERR_UNDECLARED 10 //2.3
+#define ERR_DECLARED 11 //2.3
+#define ERR_VARIABLE 20 //2.4
+#define ERR_FUNCTION 21 //2.4
+
 typedef struct stack {
     SymbolTable** tables; 
     size_t size;          
@@ -16,6 +21,11 @@ void free_stack(Stack* stack);
 int push_stack(Stack* stack, SymbolTable* table);
 SymbolTable* pop_stack(Stack* stack);
 SymbolTable* peek_stack(const Stack* stack, unsigned short level);
+
+//Error handling
+void isAlreadyDeclared(const Stack* stack, char* lex_value, int lineno);
+void isUndeclared(const Stack* stack, char* lex_value, int lineno);
+void isKindCorrect(const Stack* stack,char* lex_value,  Kind kind, int lineno);
 
 void print_all_tables(const Stack* stack);
 

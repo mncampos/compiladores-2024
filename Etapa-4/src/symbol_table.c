@@ -37,7 +37,7 @@ void free_symbol_table(SymbolTable *table)
     free(table);
 }
 
- int resize_symbol_table(SymbolTable *table)
+int resize_symbol_table(SymbolTable *table)
 {
     size_t new_capacity = table->capacity * 2;
     TableData *new_data = realloc(table->data, new_capacity * sizeof(TableData));
@@ -88,8 +88,10 @@ TableData *find_symbol(const SymbolTable *table, const char *lex_value)
     return NULL;
 }
 
-void print_symbol_table(const SymbolTable *table) {
-    if (!table || table->size == 0) {
+void print_symbol_table(const SymbolTable *table)
+{
+    if (!table || table->size == 0)
+    {
         printf("The symbol table is empty.\n");
         return;
     }
@@ -99,23 +101,23 @@ void print_symbol_table(const SymbolTable *table) {
     printf("| No. | Line Number    | Kind       | Data Type   | Lexical Value  |\n");
     printf("+-----+----------------+------------+-------------+----------------+\n");
 
-    for (size_t i = 0; i < table->size; i++) {
+    for (size_t i = 0; i < table->size; i++)
+    {
         TableData *entry = &table->data[i];
-        
-        const char *value_type_str = 
+
+        const char *value_type_str =
             (entry->value_type == IDENTIFIER) ? "Identifier" : "Function";
-        
-        const char *symbol_type_str = 
+
+        const char *symbol_type_str =
             (entry->symbol_type == 1) ? "Int" : "Float";
 
-        printf("| %-3zu | %-14u | %-10s | %-11s | %-14s |\n", 
-               i + 1, 
-               entry->line_number, 
-               value_type_str, 
-               symbol_type_str, 
+        printf("| %-3zu | %-14u | %-10s | %-11s | %-14s |\n",
+               i + 1,
+               entry->line_number,
+               value_type_str,
+               symbol_type_str,
                entry->lex_value);
     }
 
     printf("+-----+----------------+------------+-------------+----------------+\n");
 }
-
