@@ -78,6 +78,9 @@ int insert_symbol(SymbolTable *table, unsigned int line_number, int value_type, 
 
 TableData *find_symbol(const SymbolTable *table, const char *lex_value)
 {
+    if (!table || !lex_value)
+        return NULL;
+        
     for (size_t i = 0; i < table->size; ++i)
     {
         if (strcmp(table->data[i].lex_value, lex_value) == 0)

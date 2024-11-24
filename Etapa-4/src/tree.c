@@ -51,6 +51,10 @@ void free_ast(Node *root)
     free_ast(root->children[i]);
   }
 
+  if (root->lex_value) {
+    free_type_lex(root->lex_value);
+  }
+
   free(root->children);
   free(root);
 }
