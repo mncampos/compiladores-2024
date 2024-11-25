@@ -18,5 +18,7 @@ typedef struct TypeLex {
 
 // Função para criar um novo tipo léxico
 TypeLex* new_lex_type(int line, int type, char* value);
+// Funcao para liberar memoria de um tipo lexico
+void free_lex_type(TypeLex* lex);
 
 #endif // TYPE_LEX_H
