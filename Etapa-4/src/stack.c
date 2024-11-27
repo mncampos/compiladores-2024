@@ -109,7 +109,7 @@ void isAlreadyDeclared(const Stack *stack, char *lex_value, int lineno)
                 }
                 else
                 {
-                    printf("Attempted to declare symbol '%s' in line %d, but it is already declared in line %d (nested scope level %zu).\n",
+                    printf("SEMANTIC ERROR: Attempted to declare symbol '%s' in line %d, but it is already declared in line %d (nested scope level %zu).\n",
                            lex_value, lineno, symbol->line_number, i + 1);
                 }
                 exit(ERR_DECLARED);
@@ -170,13 +170,13 @@ void isKindCorrect(const Stack *stack, char *lex_value, Kind kind, int lineno)
                 {
                     if (kind == IDENTIFIER && symbol->value_type == FUNCTION)
                     {
-                        printf("SEMANTIC ERROR: Attempted to use variable '%s' as a function in line %d.\n", lex_value, lineno);
-                        exit(ERR_VARIABLE);
+                        printf("SEMANTIC ERROR: Attempted to use function '%s' as a variable in line %d.\n", lex_value, lineno);
+                        exit(ERR_FUNCTION);
                     }
                     if (kind == FUNCTION && symbol->value_type == IDENTIFIER)
                     {
-                        printf("SEMANTIC ERROR: Attempted to use function '%s' as a variable in line %d.\n", lex_value, lineno);
-                        exit(ERR_FUNCTION);
+                        printf("SEMANTIC ERROR: Attempted to use variable '%s' as a function in line %d.\n", lex_value, lineno);
+                        exit(ERR_VARIABLE);
                     }
                 }
             }

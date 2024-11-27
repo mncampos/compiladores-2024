@@ -300,9 +300,6 @@ atribuicao:
 chamada_funcao:
     TK_IDENTIFICADOR '(' lista_args ')' {
 
-        isUndeclared(table_stack, $1->value, $1->line);
-        isKindCorrect(table_stack, $1->value, FUNCTION, $1->line);
-
         size_t new_length = strlen($1->value) + strlen("call ") + 1;
         char* buffer = malloc(new_length);
         if (buffer) {
@@ -310,6 +307,10 @@ chamada_funcao:
             $$ = new_simple_node(buffer);
             add_child($$, $3);
         }
+
+        
+        isUndeclared(table_stack, $1->value, $1->line);
+        isKindCorrect(table_stack, $1->value, FUNCTION, $1->line);
     }
 
 lista_args:
@@ -326,7 +327,6 @@ lista_args:
 retorno:
     TK_PR_RETURN expr {
         $$ = new_simple_node("return");
-        $$->lex_value->type = typeInfer($2);
         add_child($$, $2);
     }
 
@@ -348,7 +348,6 @@ controle_fluxo:
 if:
     TK_PR_IF '(' expr ')' bloco_comandos {
         $$ = new_simple_node("if");
-        $$->lex_value->type = typeInfer($3);
         add_child($$, $3);
         if ($5 != NULL) {
             add_child($$, $5);
@@ -356,7 +355,6 @@ if:
     }
     | TK_PR_IF '(' expr ')' bloco_comandos TK_PR_ELSE bloco_comandos {
         $$ = new_simple_node("if");
-        $$->lex_value->type = typeInfer($3);
         add_child($$, $3);
         if ($5 != NULL) {
             add_child($$, $5);
@@ -369,7 +367,6 @@ if:
 while:
     TK_PR_WHILE '(' expr ')' bloco_comandos {
         $$ = new_simple_node("while");
-        $$->lex_value->type = typeInfer($3);
         add_child($$, $3);
         if ($5 != NULL) {
             add_child($$, $5);
@@ -389,6 +386,7 @@ expr:
 expr_or:
     expr_or TK_OC_OR expr_and {
         $$ = new_simple_node("|");
+        $$->lex_value->type = typeInfer($3);
         add_child($$, $1);
         add_child($$, $3);
     }
@@ -399,6 +397,7 @@ expr_or:
 expr_and:
     expr_and TK_OC_AND expr_eq {
         $$ = new_simple_node("&");
+        $$->lex_value->type = typeInfer($3);
         add_child($$, $1);
         add_child($$, $3);
     }
@@ -409,11 +408,13 @@ expr_and:
 expr_eq:
     expr_eq TK_OC_EQ expr_cmp {
         $$ = new_simple_node("==");
+        $$->lex_value->type = typeInfer($3);
         add_child($$, $1);
         add_child($$, $3);
     }
     | expr_eq TK_OC_NE expr_cmp {
         $$ = new_simple_node("!=");
+        $$->lex_value->type = typeInfer($3);
         add_child($$, $1);
         add_child($$, $3);
     }
@@ -424,21 +425,25 @@ expr_eq:
 expr_cmp:
     expr_cmp '<' expr_sum {
         $$ = new_simple_node("<");
+        $$->lex_value->type = typeInfer($3);
         add_child($$, $1);
         add_child($$, $3);
     }
     | expr_cmp '>' expr_sum {
         $$ = new_simple_node(">");
+        $$->lex_value->type = typeInfer($3);
         add_child($$, $1);
         add_child($$, $3);
     }
     | expr_cmp TK_OC_LE expr_sum {
         $$ = new_simple_node("<=");
+        $$->lex_value->type = typeInfer($3);
         add_child($$, $1);
         add_child($$, $3);
     }
     | expr_cmp TK_OC_GE expr_sum {
         $$ = new_simple_node(">=");
+        $$->lex_value->type = typeInfer($3);
         add_child($$, $1);
         add_child($$, $3);
     }
@@ -449,11 +454,13 @@ expr_cmp:
 expr_sum:
     expr_sum '+' expr_mult {
         $$ = new_simple_node("+");
+        $$->lex_value->type = typeInfer($3);
         add_child($$, $1);
         add_child($$, $3);
     }
     | expr_sum '-' expr_mult {
         $$ = new_simple_node("-");
+        $$->lex_value->type = typeInfer($3);
         add_child($$, $1);
         add_child($$, $3);
     }
@@ -464,16 +471,19 @@ expr_sum:
 expr_mult:
     expr_mult '*' expr_unaria {
         $$ = new_simple_node("*");
+        $$->lex_value->type = typeInfer($3);
         add_child($$, $1);
         add_child($$, $3);
     }
     | expr_mult '/' expr_unaria {
         $$ = new_simple_node("/");
+        $$->lex_value->type = typeInfer($3);
         add_child($$, $1);
         add_child($$, $3);
     }
     | expr_mult '%' expr_unaria {
         $$ = new_simple_node("%");
+        $$->lex_value->type = typeInfer($3);
         add_child($$, $1);
         add_child($$, $3);
     }
@@ -484,10 +494,12 @@ expr_mult:
 expr_unaria:
     '!' expr_unaria {
         $$ = new_simple_node("!");
+        $$->lex_value->type = $2->lex_value->type;
         add_child($$, $2);
     }
     | '-' expr_unaria {
         $$ = new_simple_node("-");
+        $$->lex_value->type = $2->lex_value->type;
         add_child($$, $2);
     }
     | parenteses {
