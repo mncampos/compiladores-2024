@@ -24,7 +24,7 @@ void free_ast(Node* root);
 void add_child(Node* parent, Node* child);
 
 //Infere o tipo de um nodo raiz de expressão
-int typeInfer(Node* root);
+int typeInfer(int type_1, int type_2);
 
 
 

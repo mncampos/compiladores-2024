@@ -85,36 +85,21 @@ void print_all_tables(const Stack *stack)
     }
 }
 
-void isAlreadyDeclared(const Stack *stack, char *lex_value, int lineno)
+void isAlreadyDeclared(const SymbolTable *current_table, char *lex_value, int lineno)
 {
-    if (stack == NULL || stack->tables == NULL)
+    if (current_table == NULL)
     {
-        printf("Error: Stack is uninitialized.\n");
+        printf("Error: Scope is uninitialized.\n");
         exit(-1);
     }
 
-    for (size_t i = 0; i < stack->size; i++)
+    TableData *symbol = find_symbol(current_table, lex_value);
+    if (symbol != NULL)
     {
-        SymbolTable *table = peek_stack(stack, stack->size - i);
+        printf("SEMANTIC ERROR: Attempted to declare symbol '%s' in line %d, but it is already declared in line %d.\n",
+               lex_value, lineno, symbol->line_number);
 
-        if (table != NULL)
-        {
-            TableData *symbol = find_symbol(table, lex_value);
-            if (symbol != NULL)
-            {
-                if (i == 0)
-                {
-                    printf("SEMANTIC ERROR: Attempted to declare symbol '%s' in line %d, but it is already declared in line %d (global scope).\n",
-                           lex_value, lineno, symbol->line_number);
-                }
-                else
-                {
-                    printf("SEMANTIC ERROR: Attempted to declare symbol '%s' in line %d, but it is already declared in line %d (nested scope level %zu).\n",
-                           lex_value, lineno, symbol->line_number, i + 1);
-                }
-                exit(ERR_DECLARED);
-            }
-        }
+        exit(ERR_DECLARED);
     }
 }
 

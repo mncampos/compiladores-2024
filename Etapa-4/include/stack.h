@@ -24,7 +24,7 @@ SymbolTable* peek_stack(const Stack* stack, unsigned short level);
 
 
 //Error handling
-void isAlreadyDeclared(const Stack* stack, char* lex_value, int lineno);
+void isAlreadyDeclared(const SymbolTable *current_table, char *lex_value, int lineno);
 void isUndeclared(const Stack* stack, char* lex_value, int lineno);
 void isKindCorrect(const Stack* stack,char* lex_value,  Kind kind, int lineno);
 

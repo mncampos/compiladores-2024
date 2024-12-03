@@ -51,10 +51,6 @@ void free_ast(Node *root)
     free_ast(root->children[i]);
   }
 
-  if (root->lex_value) {
-    free_lex_type(root->lex_value);
-  }
-
   free(root->children);
   free(root);
 }
@@ -78,28 +74,16 @@ void add_child(Node *parent, Node *child)
   parent->children_quantity++;
 }
 
-static int inferRules(int first_type, int second_type)
+int typeInfer(int type_1, int type_2)
 {
-  if (first_type == LEX_LIT_FLOAT || second_type == LEX_LIT_FLOAT)
+  if (type_1 > type_2)
   {
-    return LEX_LIT_FLOAT;
+    return type_1;
   }
   else
-    return LEX_LIT_INT;
-}
-
-int typeInfer(Node *root)
-{
-  int type = -1;
-  if (root != NULL)
   {
-    for (int i = 0; i < root->children_quantity; i++)
-    {
-      type = inferRules(type, typeInfer(root->children[i]));
-    }
-    return type;
+    return type_2;
   }
-  return -1;
 }
 static void _asd_print(FILE *foutput, Node *tree, int profundidade)
 {

@@ -138,13 +138,14 @@ cabecalho:
         
         $$ = new_node($1);
         
-        isAlreadyDeclared(table_stack, $1->value, $1->line);
+        isAlreadyDeclared(peek_stack(table_stack,2), $1->value, $1->line);
         insert_symbol(peek_stack(table_stack, 2), $1->line, FUNCTION, $6->type, $1->value);
+        $$->lex_value->type = $6->type;
     }
 
 lista_parametros:
-    lista_parametros TK_OC_OR TK_IDENTIFICADOR '<' '-' tipo { isAlreadyDeclared(table_stack, $3->value, $3->line); insert_symbol(peek_stack(table_stack,1), $3->line, IDENTIFIER, $6->type, $3->value ); }
-    | TK_IDENTIFICADOR '<' '-' tipo {isAlreadyDeclared(table_stack, $1->value, $1->line); insert_symbol(peek_stack(table_stack,1), $1->line, IDENTIFIER, $4->type, $1->value );  }
+    lista_parametros TK_OC_OR TK_IDENTIFICADOR '<' '-' tipo { isAlreadyDeclared(peek_stack(table_stack,1), $3->value, $3->line); insert_symbol(peek_stack(table_stack,1), $3->line, IDENTIFIER, $6->type, $3->value ); }
+    | TK_IDENTIFICADOR '<' '-' tipo {isAlreadyDeclared(peek_stack(table_stack,1), $1->value, $1->line); insert_symbol(peek_stack(table_stack,1), $1->line, IDENTIFIER, $4->type, $1->value );  }
     | /* vazio */
 
 
@@ -159,9 +160,11 @@ corpo: '{' lista_de_comandos '}' {
 literal:
     TK_LIT_INT {
         $$ = new_node($1);
+        $$->lex_value->type = LEX_LIT_INT;
     }
     | TK_LIT_FLOAT {
         $$ = new_node($1);
+        $$->lex_value->type = LEX_LIT_FLOAT;
     }
 
 tipo:
@@ -265,16 +268,17 @@ lista_variaveis:
 variavel:
     TK_IDENTIFICADOR {
         $$ = NULL;
-        isAlreadyDeclared(table_stack, $1->value, $1->line);
+        isAlreadyDeclared(peek_stack(table_stack,1), $1->value, $1->line);
         insert_symbol(peek_stack(table_stack, 1), $1->line, IDENTIFIER, current_type, $1->value);
     }
     | TK_IDENTIFICADOR TK_OC_LE literal {
         $$ = new_simple_node("<=");
         Node* new = new_node($1);
+        new->lex_value->type = current_type;
         add_child($$, new);
         add_child($$, $3);
 
-        isAlreadyDeclared(table_stack, $1->value, $1->line);
+        isAlreadyDeclared(peek_stack(table_stack,1), $1->value, $1->line);
         insert_symbol(peek_stack(table_stack, 1), $1->line, IDENTIFIER, current_type, $1->value);
     }
 
@@ -284,13 +288,18 @@ variavel:
 atribuicao:
     TK_IDENTIFICADOR '=' expr {
 
-        $$ = new_simple_node("=");
-        add_child($$, new_node($1));
-        add_child($$, $3);
-
-        $1->type = typeInfer($$);
+        
         isUndeclared(table_stack, $1->value, $1->line);
         isKindCorrect(table_stack, $1->value, IDENTIFIER, $1->line);
+
+        $$ = new_simple_node("=");
+        $$->lex_value->type = find_symbol(peek_stack(table_stack,1), $1->value)->symbol_type;
+        Node* new = new_node($1);
+        new->lex_value->type = $$->lex_value->type;
+        add_child($$, new);
+        add_child($$, $3);
+
+
 
 
     }
@@ -386,7 +395,7 @@ expr:
 expr_or:
     expr_or TK_OC_OR expr_and {
         $$ = new_simple_node("|");
-        $$->lex_value->type = typeInfer($3);
+        $$->lex_value->type = typeInfer($1->lex_value->type, $3->lex_value->type);
         add_child($$, $1);
         add_child($$, $3);
     }
@@ -397,7 +406,7 @@ expr_or:
 expr_and:
     expr_and TK_OC_AND expr_eq {
         $$ = new_simple_node("&");
-        $$->lex_value->type = typeInfer($3);
+        $$->lex_value->type = typeInfer($1->lex_value->type, $3->lex_value->type);
         add_child($$, $1);
         add_child($$, $3);
     }
@@ -408,13 +417,13 @@ expr_and:
 expr_eq:
     expr_eq TK_OC_EQ expr_cmp {
         $$ = new_simple_node("==");
-        $$->lex_value->type = typeInfer($3);
+        $$->lex_value->type = typeInfer($1->lex_value->type, $3->lex_value->type);
         add_child($$, $1);
         add_child($$, $3);
     }
     | expr_eq TK_OC_NE expr_cmp {
         $$ = new_simple_node("!=");
-        $$->lex_value->type = typeInfer($3);
+        $$->lex_value->type = typeInfer($1->lex_value->type, $3->lex_value->type);
         add_child($$, $1);
         add_child($$, $3);
     }
@@ -425,25 +434,25 @@ expr_eq:
 expr_cmp:
     expr_cmp '<' expr_sum {
         $$ = new_simple_node("<");
-        $$->lex_value->type = typeInfer($3);
+        $$->lex_value->type = typeInfer($1->lex_value->type, $3->lex_value->type);
         add_child($$, $1);
         add_child($$, $3);
     }
     | expr_cmp '>' expr_sum {
         $$ = new_simple_node(">");
-        $$->lex_value->type = typeInfer($3);
+        $$->lex_value->type = typeInfer($1->lex_value->type, $3->lex_value->type);
         add_child($$, $1);
         add_child($$, $3);
     }
     | expr_cmp TK_OC_LE expr_sum {
         $$ = new_simple_node("<=");
-        $$->lex_value->type = typeInfer($3);
+        $$->lex_value->type = typeInfer($1->lex_value->type, $3->lex_value->type);
         add_child($$, $1);
         add_child($$, $3);
     }
     | expr_cmp TK_OC_GE expr_sum {
         $$ = new_simple_node(">=");
-        $$->lex_value->type = typeInfer($3);
+        $$->lex_value->type = typeInfer($1->lex_value->type, $3->lex_value->type);
         add_child($$, $1);
         add_child($$, $3);
     }
@@ -454,13 +463,13 @@ expr_cmp:
 expr_sum:
     expr_sum '+' expr_mult {
         $$ = new_simple_node("+");
-        $$->lex_value->type = typeInfer($3);
+        $$->lex_value->type = typeInfer($1->lex_value->type, $3->lex_value->type);
         add_child($$, $1);
         add_child($$, $3);
     }
     | expr_sum '-' expr_mult {
         $$ = new_simple_node("-");
-        $$->lex_value->type = typeInfer($3);
+        $$->lex_value->type = typeInfer($1->lex_value->type, $3->lex_value->type);
         add_child($$, $1);
         add_child($$, $3);
     }
@@ -471,19 +480,19 @@ expr_sum:
 expr_mult:
     expr_mult '*' expr_unaria {
         $$ = new_simple_node("*");
-        $$->lex_value->type = typeInfer($3);
+        $$->lex_value->type = typeInfer($1->lex_value->type, $3->lex_value->type);
         add_child($$, $1);
         add_child($$, $3);
     }
     | expr_mult '/' expr_unaria {
         $$ = new_simple_node("/");
-        $$->lex_value->type = typeInfer($3);
+        $$->lex_value->type = typeInfer($1->lex_value->type, $3->lex_value->type);
         add_child($$, $1);
         add_child($$, $3);
     }
     | expr_mult '%' expr_unaria {
         $$ = new_simple_node("%");
-        $$->lex_value->type = typeInfer($3);
+        $$->lex_value->type = typeInfer($1->lex_value->type, $3->lex_value->type);
         add_child($$, $1);
         add_child($$, $3);
     }
