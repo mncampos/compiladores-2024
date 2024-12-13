@@ -15,7 +15,7 @@ BISON_DIR = bison
 # Fontes
 SCANNER = $(FLEX_DIR)/scanner.l
 PARSER = $(BISON_DIR)/parser.y
-OBJ = $(SRC_DIR)/type_lex.o $(SRC_DIR)/tree.o $(BISON_DIR)/parser.tab.o $(FLEX_DIR)/lex.yy.o $(SRC_DIR)/main.o $(SRC_DIR)/stack.o $(SRC_DIR)/symbol_table.o
+OBJ = $(SRC_DIR)/type_lex.o $(SRC_DIR)/tree.o $(BISON_DIR)/parser.tab.o $(FLEX_DIR)/lex.yy.o $(SRC_DIR)/main.o $(SRC_DIR)/stack.o $(SRC_DIR)/symbol_table.o $(SRC_DIR)/iloc.o $(SRC_DIR)/linked_list.o
 
 # Alvo principal
 all: etapa5
@@ -50,12 +50,18 @@ $(SRC_DIR)/stack.o: $(SRC_DIR)/stack.c $(INCLUDE_DIR)/stack.h
 $(SRC_DIR)/symbol_table.o: $(SRC_DIR)/symbol_table.c $(INCLUDE_DIR)/symbol_table.h $(INCLUDE_DIR)/stack.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
+$(SRC_DIR)/iloc.o: $(SRC_DIR)/iloc.c $(INCLUDE_DIR)/iloc.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(SRC_DIR)/linked_list.o: $(SRC_DIR)/linked_list.c $(INCLUDE_DIR)/linked_list.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
 # Regra para construir o executável
-etapa4: $(OBJ)
+etapa5: $(OBJ)
 	$(CC) -o $@ $^ $(LIBS)
 
 # Regra de limpeza
 clean:
 	rm -f $(OBJ) $(FLEX_DIR)/lex.yy.c $(FLEX_DIR)/lex.yy.o \
 	$(BISON_DIR)/parser.tab.c $(BISON_DIR)/parser.tab.h \
-	$(BISON_DIR)/parser.tab.o etapa4
+	$(BISON_DIR)/parser.tab.o etapa5
