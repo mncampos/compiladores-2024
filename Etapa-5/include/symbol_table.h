@@ -7,9 +7,6 @@
 #include "tree.h"
 #include <string.h>
 
-
-
-
 typedef enum kind
 {
     IDENTIFIER,
@@ -20,7 +17,7 @@ typedef enum data_type
 {
     INT_TYPE,
     FLOAT_TYPE
-} DataType; // Tipo do dado 
+} DataType; // Tipo do dado
 
 typedef struct table_data
 {
@@ -28,6 +25,8 @@ typedef struct table_data
     Kind value_type;
     DataType symbol_type;
     char *lex_value;
+    char *temp_name;
+    char *offset;
 
 } TableData;
 
@@ -36,16 +35,17 @@ typedef struct symbol_table
     TableData *data;
     size_t size;
     size_t capacity;
+    int offset;
 } SymbolTable;
 
 SymbolTable *create_symbol_table(size_t initial_capacity);
 void free_symbol_table(SymbolTable *table);
-int insert_symbol(SymbolTable *table, unsigned int line_number, int value_type, int symbol_type, char * lex_value);
+int insert_symbol(SymbolTable *table, unsigned int line_number, int value_type, int symbol_type, char *lex_value);
 int resize_symbol_table(SymbolTable *table);
 TableData *find_symbol(const SymbolTable *table, const char *lex_value);
-DataType getType(const SymbolTable* table, const char *lex_value);
+DataType getType(const SymbolTable *table, const char *lex_value);
 
-//debug
+// debug
 
 void print_symbol_table(const SymbolTable *table);
 

@@ -293,12 +293,15 @@ atribuicao:
         isKindCorrect(table_stack, $1->value, IDENTIFIER, $1->line);
 
         $$ = new_simple_node("=");
-        $$->lex_value->type = find_symbol(peek_stack(table_stack,1), $1->value)->symbol_type;
         Node* new = new_node($1);
         new->lex_value->type = $$->lex_value->type;
         add_child($$, new);
         add_child($$, $3);
 
+        TableData* data = find_symbol(peek_stack(table_stack, 1), $1->value);
+        $$->lex_value->type = data->symbol_type;
+        $$->code = add_instruction($$->code, new_instruction("loadI", data->offset, data->temp_name, NULL));
+        $$->code = add_instruction($$->code, new_instruction("storeAO", $3->temp_name, data->temp_name, "rfp"));
 
 
 
@@ -358,28 +361,61 @@ if:
     TK_PR_IF '(' expr ')' bloco_comandos {
         $$ = new_simple_node("if");
         add_child($$, $3);
+        char* label1 = create_label();
+        char* label2 = create_label();
+        char* label3 = create_label();
+
+        add_instruction($$->code, new_instruction("cbr", $3->temp_name, label1, label2));
+        add_instruction($$->code, new_instruction("label", label1, NULL, NULL));
+
         if ($5 != NULL) {
             add_child($$, $5);
         }
+
+        add_instruction($$->code, new_instruction("jumpI", label3, NULL, NULL));
+        add_instruction($$->code, new_instruction("label", label2, NULL, NULL));
     }
     | TK_PR_IF '(' expr ')' bloco_comandos TK_PR_ELSE bloco_comandos {
         $$ = new_simple_node("if");
         add_child($$, $3);
+        char* label1 = create_label();
+        char* label2 = create_label();
+        char* label3 = create_label();
+
+        add_instruction($$->code, new_instruction("cbr", $3->temp_name, label1, label2));
+        add_instruction($$->code, new_instruction("label", label1, NULL, NULL));
         if ($5 != NULL) {
             add_child($$, $5);
         }
+
+        add_instruction($$->code, new_instruction("jumpI", label3, NULL, NULL));
+        add_instruction($$->code, new_instruction("label", label2, NULL, NULL));
+
         if ($7 != NULL) {
             add_child($$, $7);
         }
+
+        add_instruction($$->code, new_instruction("label", label3, NULL, NULL));
     }
 
 while:
     TK_PR_WHILE '(' expr ')' bloco_comandos {
         $$ = new_simple_node("while");
+
+        char* label1 = create_label();
+        char* label2 = create_label();
+        char* label3 = create_label();
+        $$->code = add_instruction(new_list(), new_instruction("label", label3, NULL, NULL));
         add_child($$, $3);
+        add_instruction($$->code, new_instruction("cbr", $3->temp_name, label1, label2));
+        add_instruction($$->code, new_instruction("label", label1, NULL, NULL));
+
         if ($5 != NULL) {
             add_child($$, $5);
         }
+
+        add_instruction($$->code, new_instruction("jumpI", label3, NULL, NULL));
+        add_instruction($$->code, new_instruction("label", label2, NULL, NULL));
     }
 
 
@@ -398,6 +434,7 @@ expr_or:
         $$->lex_value->type = typeInfer($1->lex_value->type, $3->lex_value->type);
         add_child($$, $1);
         add_child($$, $3);
+        gen_code($$, $1->temp_name, $3->temp_name, 1);
     }
     | expr_and {
         $$ = $1;
@@ -409,6 +446,7 @@ expr_and:
         $$->lex_value->type = typeInfer($1->lex_value->type, $3->lex_value->type);
         add_child($$, $1);
         add_child($$, $3);
+        gen_code($$, $1->temp_name, $3->temp_name, 1);
     }
     | expr_eq {
         $$ = $1;
@@ -420,12 +458,14 @@ expr_eq:
         $$->lex_value->type = typeInfer($1->lex_value->type, $3->lex_value->type);
         add_child($$, $1);
         add_child($$, $3);
+        gen_code($$, $1->temp_name, $3->temp_name, 1);
     }
     | expr_eq TK_OC_NE expr_cmp {
         $$ = new_simple_node("!=");
         $$->lex_value->type = typeInfer($1->lex_value->type, $3->lex_value->type);
         add_child($$, $1);
         add_child($$, $3);
+        gen_code($$, $1->temp_name, $3->temp_name, 1);
     }
     | expr_cmp {
         $$ = $1;
@@ -437,24 +477,28 @@ expr_cmp:
         $$->lex_value->type = typeInfer($1->lex_value->type, $3->lex_value->type);
         add_child($$, $1);
         add_child($$, $3);
+        gen_code($$, $1->temp_name, $3->temp_name, 1);
     }
     | expr_cmp '>' expr_sum {
         $$ = new_simple_node(">");
         $$->lex_value->type = typeInfer($1->lex_value->type, $3->lex_value->type);
         add_child($$, $1);
         add_child($$, $3);
+        gen_code($$, $1->temp_name, $3->temp_name, 1);
     }
     | expr_cmp TK_OC_LE expr_sum {
         $$ = new_simple_node("<=");
         $$->lex_value->type = typeInfer($1->lex_value->type, $3->lex_value->type);
         add_child($$, $1);
         add_child($$, $3);
+        gen_code($$, $1->temp_name, $3->temp_name, 1);
     }
     | expr_cmp TK_OC_GE expr_sum {
         $$ = new_simple_node(">=");
         $$->lex_value->type = typeInfer($1->lex_value->type, $3->lex_value->type);
         add_child($$, $1);
         add_child($$, $3);
+        gen_code($$, $1->temp_name, $3->temp_name, 1);
     }
     | expr_sum {
         $$ = $1;
@@ -466,12 +510,14 @@ expr_sum:
         $$->lex_value->type = typeInfer($1->lex_value->type, $3->lex_value->type);
         add_child($$, $1);
         add_child($$, $3);
+        gen_code($$, $1->temp_name, $3->temp_name, 1);
     }
     | expr_sum '-' expr_mult {
         $$ = new_simple_node("-");
         $$->lex_value->type = typeInfer($1->lex_value->type, $3->lex_value->type);
         add_child($$, $1);
         add_child($$, $3);
+        gen_code($$, $1->temp_name, $3->temp_name, 1);
     }
     | expr_mult {
         $$ = $1;
@@ -483,18 +529,21 @@ expr_mult:
         $$->lex_value->type = typeInfer($1->lex_value->type, $3->lex_value->type);
         add_child($$, $1);
         add_child($$, $3);
+        gen_code($$, $1->temp_name, $3->temp_name, 1);
     }
     | expr_mult '/' expr_unaria {
         $$ = new_simple_node("/");
         $$->lex_value->type = typeInfer($1->lex_value->type, $3->lex_value->type);
         add_child($$, $1);
         add_child($$, $3);
+        gen_code($$, $1->temp_name, $3->temp_name, 1);
     }
     | expr_mult '%' expr_unaria {
         $$ = new_simple_node("%");
         $$->lex_value->type = typeInfer($1->lex_value->type, $3->lex_value->type);
         add_child($$, $1);
         add_child($$, $3);
+        gen_code($$, $1->temp_name, $3->temp_name, 1);
     }
     | expr_unaria {
         $$ = $1;
@@ -505,11 +554,17 @@ expr_unaria:
         $$ = new_simple_node("!");
         $$->lex_value->type = $2->lex_value->type;
         add_child($$, $2);
+        char* temp_name = create_temporary();
+        add_instruction($$->code, new_instruction("loadI", get_constant($$->lex_value->value), temp_name, NULL));
+        gen_code($$, $2->temp_name, temp_name, 0);
     }
     | '-' expr_unaria {
         $$ = new_simple_node("-");
         $$->lex_value->type = $2->lex_value->type;
         add_child($$, $2);
+         char* temp_name = create_temporary();
+        add_instruction($$->code, new_instruction("loadI", get_constant($$->lex_value->value), temp_name, NULL));
+        gen_code($$, $2->temp_name, temp_name, 0);
     }
     | parenteses {
         $$ = $1;
@@ -530,9 +585,15 @@ op:
         isKindCorrect(table_stack,$1->value, IDENTIFIER, $1->line);
         $1->type = getType(peek_stack(table_stack, 1), $1->value);
         $$ = new_node($1);
+
+        TableData* data = find_symbol(peek_stack(table_stack, 1), $1->value);
+        $$->temp_name = create_temporary();
+        $$->code = add_instruction(new_list(), new_instruction("loadAO", data->temp_name, "rfp", $$->temp_name));
     }
     | literal {
         $$ = $1;
+        $$->temp_name = create_temporary();
+        $$->code = add_instruction(new_list(), new_instruction("loadI", $$->lex_value->value, $$->temp_name, NULL));
     }
     | chamada_funcao {
         $$ = $1;

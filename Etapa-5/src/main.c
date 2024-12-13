@@ -8,14 +8,16 @@ extern int yylex_destroy(void);
 void *arvore = NULL;
 Stack *table_stack = NULL;
 
-void exporta (void *arvore){
-  asd_print_graphviz(arvore);
-};
-int main (int argc, char **argv)
+
+int main(int argc, char **argv)
 {
-  int ret = yyparse(); 
-  exporta (arvore);
+  int ret = yyparse();
   yylex_destroy();
+  if (arvore != NULL)
+  {
+    print_list(((Node *)arvore)->code);
+  }
+
   free_ast(arvore);
   free_stack(table_stack);
   return ret;

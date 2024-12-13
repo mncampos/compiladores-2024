@@ -18,6 +18,7 @@ SymbolTable *create_symbol_table(size_t initial_capacity)
     }
     table->capacity = initial_capacity;
     table->size = 0;
+    table->offset = 0;
 
     return table;
 }
@@ -65,6 +66,12 @@ int insert_symbol(SymbolTable *table, unsigned int line_number, int value_type, 
     entry->value_type = (Kind)value_type;
     entry->symbol_type = (DataType)symbol_type;
 
+    int length = snprintf(NULL, 0, "%d", table->offset);
+    entry->offset = malloc(length + 1);
+    snprintf(entry->offset, length + 1, "%d", table->offset);
+    table->offset += sizeof(int);
+    entry->temp_name = create_temporary();
+
     entry->lex_value = malloc(strlen(lex_value) + 1);
     if (!entry->lex_value)
     {
@@ -80,7 +87,7 @@ TableData *find_symbol(const SymbolTable *table, const char *lex_value)
 {
     if (!table || !lex_value)
         return NULL;
-        
+
     for (size_t i = 0; i < table->size; ++i)
     {
         if (strcmp(table->data[i].lex_value, lex_value) == 0)
@@ -93,8 +100,8 @@ TableData *find_symbol(const SymbolTable *table, const char *lex_value)
 
 DataType getType(const SymbolTable *table, const char *lex_value)
 {
-     for (size_t i = 0; i < table->size; ++i)
-         {
+    for (size_t i = 0; i < table->size; ++i)
+    {
         if (strcmp(table->data[i].lex_value, lex_value) == 0)
         {
             return table->data[i].symbol_type;

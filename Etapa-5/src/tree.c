@@ -17,6 +17,8 @@ Node *new_node(TypeLex *lex_value)
   new_node->lex_value = lex_value;
   new_node->children = NULL;
   new_node->children_quantity = 0;
+  new_node->code = NULL;
+  new_node->temp_name = NULL;
 
   return new_node;
 }
@@ -52,6 +54,8 @@ void free_ast(Node *root)
   }
 
   free(root->children);
+  free_list(root->code);
+  free(root->temp_name);
   free(root);
 }
 
@@ -72,6 +76,14 @@ void add_child(Node *parent, Node *child)
   parent->children = new_children;
   parent->children[parent->children_quantity] = child;
   parent->children_quantity++;
+  if (child->code != NULL)
+  {
+    if (parent->code == NULL)
+    {
+      parent->code = new_list();
+    }
+    copy_list(parent->code, child->code);
+  }
 }
 
 int typeInfer(int type_1, int type_2)
@@ -85,6 +97,24 @@ int typeInfer(int type_1, int type_2)
     return type_2;
   }
 }
+
+void gen_code(Node *op, char *first_op, char *second_op, int is_binary)
+{
+  op->temp_name = create_temporary();
+  char *instruction;
+
+  if (is_binary == 1)
+  {
+    instruction = binary_instruction(op->lex_value->value);
+  }
+  else
+  {
+    instruction = (op->lex_value->value);
+  }
+
+  add_instruction(op->code, new_instruction(instruction, first_op, second_op, op->temp_name));
+}
+
 static void _asd_print(FILE *foutput, Node *tree, int profundidade)
 {
   int i;
