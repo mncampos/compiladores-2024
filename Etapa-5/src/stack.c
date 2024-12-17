@@ -68,6 +68,20 @@ SymbolTable *peek_stack(const Stack *stack, unsigned short level)
     return stack->tables[stack->size - level];
 }
 
+TableData *find_stack_symbol(const Stack *stack, const char *lex_value)
+{
+    for (size_t i = 0; i < stack->size; i++)
+    {
+        TableData *data = find_symbol(stack->tables[i], lex_value);
+        if (data != NULL)
+        {
+            return data;
+        }
+    }
+    printf("not found");
+    return NULL;
+}
+
 void print_all_tables(const Stack *stack)
 {
 

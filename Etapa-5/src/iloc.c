@@ -53,6 +53,7 @@ Instruction *new_instruction(char *mnemonic, char *arg1, char *arg2, char *arg3)
         return NULL;
     }
 
+
     return instruction;
 }
 

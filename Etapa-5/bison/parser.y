@@ -363,7 +363,6 @@ if:
         add_child($$, $3);
         char* label1 = create_label();
         char* label2 = create_label();
-        char* label3 = create_label();
 
         add_instruction($$->code, new_instruction("cbr", $3->temp_name, label1, label2));
         add_instruction($$->code, new_instruction("label", label1, NULL, NULL));
@@ -372,8 +371,8 @@ if:
             add_child($$, $5);
         }
 
-        add_instruction($$->code, new_instruction("jumpI", label3, NULL, NULL));
         add_instruction($$->code, new_instruction("label", label2, NULL, NULL));
+
     }
     | TK_PR_IF '(' expr ')' bloco_comandos TK_PR_ELSE bloco_comandos {
         $$ = new_simple_node("if");
@@ -585,8 +584,9 @@ op:
         isKindCorrect(table_stack,$1->value, IDENTIFIER, $1->line);
         $1->type = getType(peek_stack(table_stack, 1), $1->value);
         $$ = new_node($1);
+        
 
-        TableData* data = find_symbol(peek_stack(table_stack, 1), $1->value);
+        TableData* data = find_stack_symbol(table_stack, $1->value);
         $$->temp_name = create_temporary();
         $$->code = add_instruction(new_list(), new_instruction("loadAO", data->temp_name, "rfp", $$->temp_name));
     }

@@ -21,6 +21,7 @@ void free_stack(Stack* stack);
 int push_stack(Stack* stack, SymbolTable* table);
 SymbolTable* pop_stack(Stack* stack);
 SymbolTable* peek_stack(const Stack* stack, unsigned short level);
+TableData* find_stack_symbol(const Stack* stack, const char* lex_value);
 
 
 //Error handling

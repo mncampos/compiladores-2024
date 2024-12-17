@@ -30,9 +30,11 @@ TypeLex *new_lex_type(int line, int type, char *value)
     return new_lex;
 }
 
-void free_lex_type(TypeLex* lex) {
+void free_lex_type(TypeLex *lex) {
     if (lex) {
-        free(lex->value);
-        free(lex);        
+        if (lex->value) {
+            free(lex->value);  
+        }
+        free(lex); 
     }
 }
