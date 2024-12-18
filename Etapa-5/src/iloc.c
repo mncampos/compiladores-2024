@@ -183,7 +183,7 @@ void print_instruction(Instruction *instruction)
     }
     else
     {
-        fprintf(stderr, "Mnemonico desconhecidoc: %s\n", mnemonic);
+        fprintf(stderr, "Mnemonico desconhecido: %s\n", mnemonic);
     }
 
     printf("\n");

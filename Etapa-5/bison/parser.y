@@ -298,7 +298,7 @@ atribuicao:
         add_child($$, new);
         add_child($$, $3);
 
-        TableData* data = find_symbol(peek_stack(table_stack, 1), $1->value);
+        TableData* data = find_stack_symbol(table_stack, $1->value);
         $$->lex_value->type = data->symbol_type;
         $$->code = add_instruction($$->code, new_instruction("loadI", data->offset, data->temp_name, NULL));
         $$->code = add_instruction($$->code, new_instruction("storeAO", $3->temp_name, data->temp_name, "rfp"));

@@ -109,8 +109,9 @@ void gen_code(Node *op, char *first_op, char *second_op, int is_binary)
   }
   else
   {
-    instruction = (op->lex_value->value);
+    instruction = unary_instruction(op->lex_value->value);
   }
+
 
   add_instruction(op->code, new_instruction(instruction, first_op, second_op, op->temp_name));
 }
