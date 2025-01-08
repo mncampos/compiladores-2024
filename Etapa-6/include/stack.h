@@ -28,7 +28,7 @@ TableData* find_stack_symbol(const Stack* stack, const char* lex_value);
 void isAlreadyDeclared(const SymbolTable *current_table, char *lex_value, int lineno);
 void isUndeclared(const Stack* stack, char* lex_value, int lineno);
 void isKindCorrect(const Stack* stack,char* lex_value,  Kind kind, int lineno);
-
+TableData *find_register(Stack *stack, char *lex_value);
 void print_all_tables(const Stack* stack);
 
 

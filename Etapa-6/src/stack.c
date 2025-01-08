@@ -55,7 +55,7 @@ SymbolTable *pop_stack(Stack *stack)
     if (stack->size == 0)
         return NULL;
 
-    return stack->tables[--stack->size];
+    return stack->tables[stack->size];
 }
 
 SymbolTable *peek_stack(const Stack *stack, unsigned short level)
@@ -78,8 +78,23 @@ TableData *find_stack_symbol(const Stack *stack, const char *lex_value)
             return data;
         }
     }
-    printf("not found");
-    return NULL;
+    printf("\nErro ao encontrar símbolo.");
+    exit(1);
+}
+
+TableData *find_register(Stack *stack, char *lex_value)
+{
+    for (size_t i = 0; i < stack->size; i++)
+    {
+        TableData *data = find_symbol(stack->tables[i], lex_value);
+        if (data != NULL)
+        {
+            return data;
+        }
+    }
+
+    insert_symbol(peek_stack(stack, 1), 0, REGISTER, NULL_TYPE, lex_value);
+    return find_register(stack, lex_value);
 }
 
 void print_all_tables(const Stack *stack)

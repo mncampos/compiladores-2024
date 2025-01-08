@@ -15,7 +15,7 @@ BISON_DIR = bison
 # Fontes
 SCANNER = $(FLEX_DIR)/scanner.l
 PARSER = $(BISON_DIR)/parser.y
-OBJ = $(SRC_DIR)/type_lex.o $(SRC_DIR)/tree.o $(BISON_DIR)/parser.tab.o $(FLEX_DIR)/lex.yy.o $(SRC_DIR)/main.o $(SRC_DIR)/stack.o $(SRC_DIR)/symbol_table.o $(SRC_DIR)/iloc.o $(SRC_DIR)/linked_list.o
+OBJ = $(SRC_DIR)/type_lex.o $(SRC_DIR)/tree.o $(BISON_DIR)/parser.tab.o $(FLEX_DIR)/lex.yy.o $(SRC_DIR)/main.o $(SRC_DIR)/stack.o $(SRC_DIR)/symbol_table.o $(SRC_DIR)/iloc.o $(SRC_DIR)/linked_list.o $(SRC_DIR)/assembly.o
 
 # Alvo principal
 all: etapa6
@@ -54,6 +54,9 @@ $(SRC_DIR)/iloc.o: $(SRC_DIR)/iloc.c $(INCLUDE_DIR)/iloc.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(SRC_DIR)/linked_list.o: $(SRC_DIR)/linked_list.c $(INCLUDE_DIR)/linked_list.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(SRC_DIR)/assembly.o: $(SRC_DIR)/assembly.c $(INCLUDE_DIR)/assembly.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Regra para construir o executável

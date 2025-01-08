@@ -11,13 +11,15 @@
 typedef enum kind
 {
     IDENTIFIER,
-    FUNCTION
+    FUNCTION,
+    REGISTER
 } Kind; // Natureza
 
 typedef enum data_type
 {
     INT_TYPE,
-    FLOAT_TYPE
+    FLOAT_TYPE,
+    NULL_TYPE
 } DataType; // Tipo do dado
 
 typedef struct table_data

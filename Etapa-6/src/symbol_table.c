@@ -83,6 +83,8 @@ int insert_symbol(SymbolTable *table, unsigned int line_number, int value_type, 
     return 1;
 }
 
+
+
 TableData *find_symbol(const SymbolTable *table, const char *lex_value)
 {
     if (!table || !lex_value)
